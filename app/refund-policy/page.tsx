@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/db/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type { RefundPolicy } from "@prisma/client"
 
 // Mark this page as dynamic to prevent prerendering during build
 export const dynamic = 'force-dynamic'
 
 export default async function RefundPolicyPage() {
   // Handle case where database might not be available during build
-  let policies = []
+  let policies: RefundPolicy[] = []
   try {
     policies = await prisma.refundPolicy.findMany({
       where: { isActive: true },
