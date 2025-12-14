@@ -36,7 +36,7 @@ jobs:
         run: npm run lint
 
       - name: Build
-        run: npm run build
+        run: npm run build:local
 
       - name: Unit Tests with Coverage
         run: npm run test
@@ -111,7 +111,7 @@ jobs:
           USE_GOOGLE_MAPS_MOCK: 'true'
           USE_EMAIL_MOCK: 'true'
         run: |
-          npm run build
+          npm run build:local
           npm run start &
           npx wait-on http://localhost:3000 --timeout 60000
 
