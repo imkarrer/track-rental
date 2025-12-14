@@ -1,0 +1,227 @@
+name: E2E Tests on Preview
+
+# Trigger: Comment "/test-e2e" on a PR
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  # =============================================================================
+  # CHECK IF TRIGGER IS VALID
+  # =============================================================================
+  check-trigger:
+    name: Check Trigger
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/test-e2e')
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      pr_number: ${{ github.event.issue.number }}
+    steps:
+      - name: Check if user has write access
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.payload.comment.user.login
+            });
+            
+            const hasAccess = ['admin', 'write'].includes(permission.permission);
+            core.setOutput('should_run', hasAccess ? 'true' : 'false');
+            
+            if (!hasAccess) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '❌ You need write access to trigger E2E tests.'
+              });
+            }
+
+      - name: Add reaction to trigger comment
+        if: steps.check.outputs.should_run == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+  # =============================================================================
+  # GET VERCEL PREVIEW URL
+  # =============================================================================
+  get-preview-url:
+    name: Get Preview URL
+    needs: check-trigger
+    if: needs.check-trigger.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.get-url.outputs.url }}
+    steps:
+      - name: Get PR head SHA
+        id: get-sha
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ needs.check-trigger.outputs.pr_number }}
+            });
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('branch', pr.head.ref);
+
+      - name: Wait for Vercel deployment
+        id: get-url
+        uses: actions/github-script@v7
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        with:
+          script: |
+            const sha = '${{ steps.get-sha.outputs.sha }}';
+            
+            // Wait for deployment to be ready (poll every 10s for up to 10 min)
+            let attempts = 0;
+            const maxAttempts = 60;
+            
+            while (attempts < maxAttempts) {
+              const { data: deployments } = await github.rest.repos.listDeployments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: sha,
+                per_page: 1
+              });
+              
+              if (deployments.length > 0) {
+                const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: deployments[0].id,
+                  per_page: 1
+                });
+                
+                if (statuses.length > 0 && statuses[0].state === 'success') {
+                  const url = statuses[0].environment_url || statuses[0].target_url;
+                  if (url) {
+                    console.log(`Found deployment URL: ${url}`);
+                    core.setOutput('url', url);
+                    return;
+                  }
+                }
+              }
+              
+              console.log(`Waiting for deployment... (attempt ${attempts + 1}/${maxAttempts})`);
+              await new Promise(r => setTimeout(r, 10000));
+              attempts++;
+            }
+            
+            core.setFailed('Timed out waiting for Vercel deployment');
+
+  # =============================================================================
+  # RUN E2E TESTS
+  # =============================================================================
+  e2e-tests:
+    name: E2E Tests
+    needs: [check-trigger, get-preview-url]
+    if: needs.get-preview-url.outputs.preview_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Post starting comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.check-trigger.outputs.pr_number }},
+              body: `🚀 **E2E Tests Started**\n\nRunning against: ${{ needs.get-preview-url.outputs.preview_url }}\n\nThis may take a few minutes...`
+            });
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ needs.check-trigger.outputs.pr_number }}/head
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests against preview
+        id: e2e
+        env:
+          BASE_URL: ${{ needs.get-preview-url.outputs.preview_url }}
+          # Test credentials - set these in GitHub secrets
+          TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+          # Stripe test mode
+          TEST_STRIPE_CARD_NUMBER: '4242424242424242'
+          TEST_STRIPE_CARD_EXPIRY: '12/34'
+          TEST_STRIPE_CARD_CVC: '123'
+          TEST_STRIPE_CARD_ZIP: '90001'
+          # Flag for tests to know they're running against preview
+          E2E_PREVIEW: 'true'
+        run: npx playwright test
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-pr-${{ needs.check-trigger.outputs.pr_number }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test videos on failure
+        if: steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos-pr-${{ needs.check-trigger.outputs.pr_number }}
+          path: test-results/
+          retention-days: 7
+
+      - name: Post success comment
+        if: steps.e2e.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.check-trigger.outputs.pr_number }},
+              body: `✅ **E2E Tests Passed!**\n\nAll tests passed against the preview deployment.\n\n[View Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+
+      - name: Post failure comment
+        if: steps.e2e.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.check-trigger.outputs.pr_number }},
+              body: `❌ **E2E Tests Failed**\n\nSome tests failed. Please check the logs and fix the issues.\n\n[View Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\nTo re-run, comment \`/test-e2e\` again after pushing fixes.`
+            });
+
+      - name: Fail workflow if tests failed
+        if: steps.e2e.outcome == 'failure'
+        run: exit 1

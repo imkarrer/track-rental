@@ -1,0 +1,76 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "group:allNonMajor"
+  ],
+  "description": "Renovate configuration for rc-track-rental",
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "America/New_York",
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Automerge dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Group Prisma packages",
+      "matchPackagePatterns": ["^@?prisma"],
+      "groupName": "prisma"
+    },
+    {
+      "description": "Group React packages",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "react"
+    },
+    {
+      "description": "Group Next.js packages",
+      "matchPackagePatterns": ["^next", "^eslint-config-next"],
+      "groupName": "nextjs"
+    },
+    {
+      "description": "Group Stripe packages",
+      "matchPackagePatterns": ["^@?stripe"],
+      "groupName": "stripe"
+    },
+    {
+      "description": "Group Radix UI packages",
+      "matchPackagePatterns": ["^@radix-ui"],
+      "groupName": "radix-ui"
+    },
+    {
+      "description": "Group testing packages",
+      "matchPackagePatterns": ["vitest", "@vitest", "playwright", "@playwright"],
+      "groupName": "testing"
+    },
+    {
+      "description": "Group TypeScript and types",
+      "matchPackagePatterns": ["^typescript$", "^@types/"],
+      "groupName": "typescript"
+    },
+    {
+      "description": "Require approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "automerge": true
+  }
+}

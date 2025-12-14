@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/maps/api/distancematrix/json",
+    "queryParameters": {
+      "origins": {
+        "matches": ".*"
+      },
+      "destinations": {
+        "matches": ".*"
+      },
+      "key": {
+        "matches": ".*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"destination_addresses\":[\"{{request.query.destinations}}\"],\"origin_addresses\":[\"{{request.query.origins}}\"],\"rows\":[{\"elements\":[{\"distance\":{\"text\":\"15.2 mi\",\"value\":24462},\"duration\":{\"text\":\"25 mins\",\"value\":1500},\"status\":\"OK\"}]}],\"status\":\"OK\"}",
+    "transformers": ["response-template"]
+  }
+}

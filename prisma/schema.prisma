@@ -1,0 +1,562 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  emailCanonical String @unique @map("email_canonical")
+  emailVerified DateTime? @map("email_verified")
+  activationToken String? @map("activation_token")
+  activationExpires DateTime? @map("activation_expires")
+  resetToken    String? @map("reset_token")
+  resetExpires  DateTime? @map("reset_expires")
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String?
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  addresses    Address[]
+  bookings     Booking[]
+  reservations Reservation[]
+  referralCodes ReferralCode[] @relation("UserReferralCodes")
+  referralRedemptions ReferralRedemption[] @relation("UserReferralRedemptions")
+  referralRewards ReferralReward[] @relation("UserReferralRewards")
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum TrackCategory {
+  ROAD
+  OFFROAD
+}
+
+enum CarCategory {
+  ROAD
+  OFFROAD
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  streetAddress String   @map("street_address")
+  city          String
+  state         String
+  zipCode       String   @map("zip_code")
+  isBilling     Boolean  @default(false) @map("is_billing")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+model Track {
+  id               String        @id @default(uuid())
+  name             String
+  description      String?       @db.Text
+  category         TrackCategory @default(ROAD)
+  length           Decimal       @db.Decimal(10, 2)
+  width            Decimal       @db.Decimal(10, 2)
+  minSpaceLength   Decimal       @map("min_space_length") @db.Decimal(10, 2)
+  minSpaceWidth    Decimal       @map("min_space_width") @db.Decimal(10, 2)
+  unitCost         Decimal?      @map("unit_cost") @db.Decimal(10, 2)
+  includedCarIds   String[]      @map("included_car_ids") // IDs of the 2 cars included with track
+  basePrice        Decimal       @map("base_price") @db.Decimal(10, 2)
+  setupTimeMinutes Int           @map("setup_time_minutes")
+  imageUrls        String[]      @map("image_urls")
+  isActive         Boolean       @default(true) @map("is_active")
+  testOnly         Boolean       @default(false) @map("test_only") // Hidden from public, only visible to admins for testing
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  bookings     Booking[]
+  reservations Reservation[]
+
+  @@map("tracks")
+}
+
+model Car {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?     @db.Text
+  category        CarCategory @default(ROAD)
+  type            String // e.g., "1/10 scale", "1/8 scale"
+  unitCost        Decimal?    @map("unit_cost") @db.Decimal(10, 2) // Purchase cost for break-even analysis
+  basePricePerDay Decimal     @map("base_price_per_day") @db.Decimal(10, 2) // Price for additional cars beyond the 2 free ones
+  imageUrls       String[]    @map("image_urls")
+  isActive        Boolean     @default(true) @map("is_active")
+  stockQuantity   Int         @default(0) @map("stock_quantity")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  bookingCars BookingCar[]
+
+  @@map("cars")
+}
+
+model FixedCostsConfig {
+  id                   String   @id @default(uuid())
+  expectedRentals      Int      @default(60) @map("expected_rentals")
+  monthlyRentalsTarget Int      @default(4) @map("monthly_rentals_target")
+  laborRatePerHour     Decimal  @default(20) @map("labor_rate_per_hour") @db.Decimal(10, 2)
+  breakdownTimeHours   Decimal  @default(1) @map("breakdown_time_hours") @db.Decimal(10, 2)
+  averageDistanceMiles Decimal  @default(20) @map("average_distance_miles") @db.Decimal(10, 2)
+  fuelCostPerMile      Decimal  @default(0.5) @map("fuel_cost_per_mile") @db.Decimal(10, 2)
+  apiEmailCosts        Decimal  @default(0.11) @map("api_email_costs") @db.Decimal(10, 2)
+  smsCostPerMessage    Decimal  @default(0.01) @map("sms_cost_per_message") @db.Decimal(10, 4)
+  stripeFeeRate        Decimal  @default(0.029) @map("stripe_fee_rate") @db.Decimal(10, 4)
+  stripeFixedFee       Decimal  @default(0.3) @map("stripe_fixed_fee") @db.Decimal(10, 2)
+  // Monthly recurring costs breakdown
+  serverHostingMonthly Decimal  @default(25) @map("server_hosting_monthly") @db.Decimal(10, 2)
+  databaseMonthly      Decimal  @default(12) @map("database_monthly") @db.Decimal(10, 2)
+  emailServiceMonthly  Decimal  @default(10) @map("email_service_monthly") @db.Decimal(10, 2)
+  domainMonthly        Decimal  @default(1) @map("domain_monthly") @db.Decimal(10, 2)
+  insuranceMonthly     Decimal  @default(41.67) @map("insurance_monthly") @db.Decimal(10, 2)
+  // Holiday multiplier (global, applies to all holidays)
+  holidayMultiplier    Decimal  @default(1.5) @map("holiday_multiplier") @db.Decimal(5, 2)
+  // Computed: total monthly recurring costs
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("fixed_costs_config")
+}
+
+model Reservation {
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  trackId              String    @map("track_id")
+  eventDate            DateTime  @map("event_date") @db.Date
+  endDate              DateTime? @map("end_date") @db.Date // For multi-day bookings
+  startTime            String    @map("start_time")
+  endTime              String    @map("end_time")
+  durationHours        Int       @map("duration_hours")
+  eventAddress         String    @map("event_address")
+  eventCity            String    @map("event_city")
+  eventState           String    @map("event_state")
+  eventZip             String    @map("event_zip")
+  availableSpaceLength Decimal?  @map("available_space_length") @db.Decimal(10, 2)
+  availableSpaceWidth  Decimal?  @map("available_space_width") @db.Decimal(10, 2)
+  distanceFromBase     Decimal?  @map("distance_from_base") @db.Decimal(10, 2)
+  dayOfWeek            Int       @map("day_of_week")
+  basePrice            Decimal   @map("base_price") @db.Decimal(10, 2)
+  dayMultiplier        Decimal   @map("day_multiplier") @db.Decimal(5, 2)
+  durationMultiplier   Decimal   @map("duration_multiplier") @db.Decimal(5, 2)
+  distanceSurcharge    Decimal   @default(0) @map("distance_surcharge") @db.Decimal(10, 2)
+  setupFee             Decimal   @default(0) @map("setup_fee") @db.Decimal(10, 2)
+  freeCarsIncluded     Int       @default(2) @map("free_cars_included")
+  additionalCarsCount  Int       @default(0) @map("additional_cars_count")
+  additionalCarsPrice  Decimal   @default(0) @map("additional_cars_price") @db.Decimal(10, 2)
+  subtotal             Decimal   @db.Decimal(10, 2)
+  tax                  Decimal   @db.Decimal(10, 2)
+  total                Decimal   @db.Decimal(10, 2)
+  referralCode         String?   @map("referral_code")
+  referralDiscount     Decimal   @default(0) @map("referral_discount") @db.Decimal(10, 2)
+  rewardId             String?   @map("reward_id")
+  rewardDiscount       Decimal   @default(0) @map("reward_discount") @db.Decimal(10, 2)
+  selectedCars         Json      @map("selected_cars") // Store car selections as JSON
+  expiresAt            DateTime  @map("expires_at") // 10 minutes from creation
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id])
+
+  @@unique([trackId, eventDate, endDate]) // Prevent overlapping reservations
+  @@index([expiresAt]) // For efficient cleanup queries
+  @@map("reservations")
+}
+
+model Booking {
+  id                   String        @id @default(uuid())
+  userId               String        @map("user_id")
+  trackId              String        @map("track_id")
+  eventDate            DateTime      @map("event_date") @db.Date
+  endDate              DateTime?     @map("end_date") @db.Date // For multi-day bookings
+  startTime            String        @map("start_time")
+  endTime              String        @map("end_time")
+  durationHours        Int           @map("duration_hours")
+  eventAddress         String        @map("event_address")
+  eventCity            String        @map("event_city")
+  eventState           String        @map("event_state")
+  eventZip             String        @map("event_zip")
+  availableSpaceLength Decimal?      @map("available_space_length") @db.Decimal(10, 2)
+  availableSpaceWidth  Decimal?      @map("available_space_width") @db.Decimal(10, 2)
+  distanceFromBase     Decimal?      @map("distance_from_base") @db.Decimal(10, 2)
+  dayOfWeek            Int           @map("day_of_week")
+  basePrice            Decimal       @map("base_price") @db.Decimal(10, 2)
+  dayMultiplier        Decimal       @map("day_multiplier") @db.Decimal(5, 2)
+  durationMultiplier   Decimal       @map("duration_multiplier") @db.Decimal(5, 2)
+  distanceSurcharge    Decimal       @default(0) @map("distance_surcharge") @db.Decimal(10, 2)
+  setupFee             Decimal       @default(0) @map("setup_fee") @db.Decimal(10, 2)
+  freeCarsIncluded     Int           @default(2) @map("free_cars_included")
+  additionalCarsCount  Int           @default(0) @map("additional_cars_count")
+  additionalCarsPrice  Decimal       @default(0) @map("additional_cars_price") @db.Decimal(10, 2)
+  subtotal             Decimal       @db.Decimal(10, 2)
+  tax                  Decimal       @db.Decimal(10, 2)
+  total                Decimal       @db.Decimal(10, 2)
+  referralCode         String?       @map("referral_code")
+  referralDiscount     Decimal       @default(0) @map("referral_discount") @db.Decimal(10, 2)
+  rewardId             String?       @map("reward_id")
+  rewardDiscount       Decimal       @default(0) @map("reward_discount") @db.Decimal(10, 2)
+  status               BookingStatus @default(PENDING)
+  paymentIntentId      String?       @map("payment_intent_id")
+  cancelledAt          DateTime?     @map("cancelled_at")
+  cancellationReason   String?       @map("cancellation_reason") @db.Text
+  totalRefunded        Decimal       @default(0) @map("total_refunded") @db.Decimal(10, 2)
+  phone                String?       @db.VarChar(32)
+  smsOptIn             Boolean       @default(false) @map("sms_opt_in")
+  emailOptOut          Boolean       @default(false) @map("email_opt_out")
+  reservationId        String?       @unique @map("reservation_id") // Link to original reservation
+  confirmationSource   String?       @default("webhook") @map("confirmation_source") // "webhook" or "fallback"
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track       Track        @relation(fields: [trackId], references: [id])
+  bookingCars BookingCar[]
+  refunds     Refund[]
+  communications CommunicationLog[]
+  referralRewards ReferralReward[]
+  history     BookingHistory[]
+
+  @@map("bookings")
+}
+
+model CommunicationLog {
+  id            String   @id @default(uuid())
+  bookingId     String   @map("booking_id")
+  channel       String   // 'email' | 'sms'
+  direction     String   // 'outbound'
+  toEmail       String?
+  toPhone       String?
+  subject       String?
+  body          String
+  status        String   @default("SENT")
+  providerId    String?
+  createdBy     String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("communication_logs")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model BookingCar {
+  id         String  @id @default(uuid())
+  bookingId  String  @map("booking_id")
+  carId      String  @map("car_id")
+  quantity   Int
+  isFree     Boolean @default(false) @map("is_free")
+  unitPrice  Decimal @map("unit_price") @db.Decimal(10, 2)
+  totalPrice Decimal @map("total_price") @db.Decimal(10, 2)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  car     Car     @relation(fields: [carId], references: [id])
+
+  @@map("booking_cars")
+}
+
+model PricingConfig {
+  id          String   @id @default(uuid())
+  configKey   String   @unique @map("config_key")
+  configValue Decimal  @map("config_value") @db.Decimal(10, 2)
+  description String?  @db.Text
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("pricing_config")
+}
+
+model DayMultiplier {
+  id         String   @id @default(uuid())
+  dayOfWeek  Int      @unique @map("day_of_week") // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  multiplier Decimal  @map("multiplier") @db.Decimal(5, 2) // e.g., 1.50 for 1.5x
+  dayName    String   @map("day_name") // "Sunday", "Monday", etc.
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("day_multipliers")
+}
+
+model Holiday {
+  id          String   @id @default(uuid())
+  name        String // e.g., "New Year's Day", "Independence Day"
+  date        DateTime @unique @db.Date // The date of the holiday
+  isRecurring Boolean  @default(false) @map("is_recurring") // If true, applies every year on this date
+  year        Int? // If not recurring, specify the year
+  isActive    Boolean  @default(true) @map("is_active")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("holidays")
+}
+
+// New model for smart recurring holidays
+model HolidayRule {
+  id          String @id // e.g., "new-years-day", "christmas"
+  name        String // Display name
+  description String // Human-readable description
+  type        String // "fixed", "nth-weekday", "relative"
+
+  // For fixed dates (e.g., Christmas on Dec 25)
+  month Int? // 1-12
+  day   Int? // 1-31
+
+  // For nth-weekday dates (e.g., Labor Day - 1st Monday in Sept)
+  weekday Int? // 0=Sunday, 1=Monday, etc.
+  week    Int? // 1-5, or -1 for last
+
+  // Observance rules
+  observedOnMonday Boolean @default(false) @map("observed_on_monday")
+  observedOnFriday Boolean @default(false) @map("observed_on_friday")
+
+  // Pricing
+  priceMultiplier Float @default(1.0) @map("price_multiplier")
+
+  // Status
+  isActive  Boolean @default(true) @map("is_active")
+  isFederal Boolean @default(false) @map("is_federal") // US Federal holiday
+
+  // Metadata
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("holiday_rules")
+}
+
+enum BatteryType {
+  NIMH
+  LIION
+  ALKALINE
+  LITHIUM_DISPOSABLE
+}
+
+enum BatteryUsage {
+  CAR
+  TRANSMITTER
+}
+
+model BatteryBatch {
+  id                     String       @id @default(uuid())
+  name                   String // e.g., "NiMH Transmitter Batch 1", "Li-ion Car Batch 1"
+  batteryType            BatteryType  @map("battery_type")
+  usage                  BatteryUsage // CAR or TRANSMITTER
+  quantity               Int // Number of batteries in this batch
+  purchaseDate           DateTime     @map("purchase_date") @db.Date
+  purchaseCost           Decimal      @map("purchase_cost") @db.Decimal(10, 2)
+  expectedCycles         Int?         @map("expected_cycles") // For rechargeable batteries
+  expectedRuntimeRoad    Decimal?     @map("expected_runtime_road") @db.Decimal(10, 2) // Minutes
+  expectedRuntimeOffroad Decimal?     @map("expected_runtime_offroad") @db.Decimal(10, 2) // Minutes
+  isActive               Boolean      @default(true) @map("is_active")
+  notes                  String?      @db.Text
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  @@map("battery_batches")
+}
+
+model Charger {
+  id                    String      @id @default(uuid())
+  name                  String // e.g., "32-Bay NiMH Charger", "16-Bay Li-ion Charger"
+  batteryType           BatteryType @map("battery_type") // Which battery type this charger supports
+  capacity              Int // Number of batteries it can charge at once
+  purchaseDate          DateTime    @map("purchase_date") @db.Date
+  purchaseCost          Decimal     @map("purchase_cost") @db.Decimal(10, 2)
+  expectedLifespanYears Int?        @map("expected_lifespan_years") // Expected lifespan in years
+  isActive              Boolean     @default(true) @map("is_active")
+  notes                 String?     @db.Text
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  @@map("chargers")
+}
+
+model RefundPolicy {
+  id                   String   @id @default(uuid())
+  daysBeforeService    Int      @unique @map("days_before_service") // Days before service date
+  nonRefundablePercent Decimal  @map("non_refundable_percent") @db.Decimal(5, 2) // Percentage (0-100) that is non-refundable
+  description          String?  @db.Text // e.g., "30+ days: 10% non-refundable"
+  isActive             Boolean  @default(true) @map("is_active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("refund_policies")
+}
+
+model Refund {
+  id             String     @id @default(uuid())
+  bookingId      String     @map("booking_id")
+  amount         Decimal    @db.Decimal(10, 2) // Amount refunded in dollars
+  refundType     RefundType @map("refund_type")
+  reason         String?    @db.Text // Admin's reason for the refund
+  circumstances  String?    @db.Text // Cancellation circumstances (customer reason, weather, etc.)
+  stripeRefundId String?    @map("stripe_refund_id") // Stripe refund ID
+  processedBy    String     @map("processed_by") // Admin user ID who processed the refund
+  processedAt    DateTime   @default(now()) @map("processed_at")
+  notes          String?    @db.Text // Additional admin notes
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+  ADMIN_DISCRETION
+}
+
+model ReminderConfig {
+  id        String   @id @default("default")
+  offsets   Int[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("reminder_config")
+}
+
+model ReferralCode {
+  id          String          @id @default(uuid())
+  code        String          @unique
+  name        String?         // Catchy name for admin codes (e.g., "Summer Sale", "Launch Special")
+  description String?         @db.Text // Description of what this code is for
+  type        ReferralCodeType @default(USER) // ADMIN for promotional codes, USER for user referrals
+  ownerUserId String?         @map("owner_user_id") // Null for admin codes
+  maxUses     Int             @default(50) @map("max_uses")
+  uses        Int             @default(0)
+  isActive    Boolean         @default(true) @map("is_active") // Can be deactivated
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  owner       User?           @relation("UserReferralCodes", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  redemptions ReferralRedemption[]
+  rewards     ReferralReward[]
+
+  @@map("referral_codes")
+}
+
+enum ReferralCodeType {
+  ADMIN  // Promotional codes created by admin
+  USER   // Referral codes owned by users
+}
+
+model ReferralRedemption {
+  id              String   @id @default(uuid())
+  codeId          String   @map("code_id")
+  referredUserId  String   @unique @map("referred_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  code   ReferralCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  user   User         @relation("UserReferralRedemptions", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@unique([codeId, referredUserId])
+  @@map("referral_redemptions")
+}
+
+model ReferralProgramConfig {
+  id                 String   @id // "user" | "admin"
+  enabled            Boolean  @default(true)
+  referrerType       String   @default("PERCENT") // "PERCENT" | "FLAT"
+  referrerPercentOff Decimal? @map("referrer_percent_off") @db.Decimal(5, 2)
+  referrerAmountOff  Decimal? @map("referrer_amount_off") @db.Decimal(10, 2)
+  referrerApplyOnce  Boolean  @default(false) @map("referrer_apply_once")
+  refereeType        String   @default("PERCENT") // "PERCENT" | "FLAT"
+  refereePercentOff  Decimal? @map("referee_percent_off") @db.Decimal(5, 2)
+  refereeAmountOff   Decimal? @map("referee_amount_off") @db.Decimal(10, 2)
+  refereeApplyOnce   Boolean  @default(true) @map("referee_apply_once")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("referral_program_config")
+}
+
+model ReferralReward {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  codeId         String   @map("code_id")
+  bookingId      String?  @map("booking_id")
+  referredUserId String?  @map("referred_user_id")
+  amount         Decimal  @db.Decimal(10, 2)
+  status         String   @default("PENDING") // PENDING | AWARDED
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user    User          @relation("UserReferralRewards", fields: [userId], references: [id], onDelete: Cascade)
+  code    ReferralCode  @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  booking Booking?      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("referral_rewards")
+}
+
+model BookingHistory {
+  id                  String            @id @default(uuid())
+  bookingId           String            @map("booking_id")
+  actionType          BookingActionType @map("action_type")
+  performedBy         String            @map("performed_by") // User ID who made the change
+  performedByRole     String            @map("performed_by_role") // USER | ADMIN
+  
+  // Before state (for modifications)
+  oldEventDate        DateTime?         @map("old_event_date") @db.Date
+  oldEndDate          DateTime?         @map("old_end_date") @db.Date
+  oldTotal            Decimal?          @map("old_total") @db.Decimal(10, 2)
+  oldStatus           String?           @map("old_status")
+  
+  // After state
+  newEventDate        DateTime?         @map("new_event_date") @db.Date
+  newEndDate          DateTime?         @map("new_end_date") @db.Date
+  newTotal            Decimal?          @map("new_total") @db.Decimal(10, 2)
+  newStatus           String?           @map("new_status")
+  
+  // Financial details (for modifications with refunds/payments)
+  refundAmount        Decimal?          @map("refund_amount") @db.Decimal(10, 2)
+  paymentAmount       Decimal?          @map("payment_amount") @db.Decimal(10, 2)
+  refundPercent       Decimal?          @map("refund_percent") @db.Decimal(5, 2)
+  
+  // Additional context
+  reason              String?           @db.Text
+  notes               String?           @db.Text
+  metadata            Json?             // Store additional data as JSON
+  
+  createdAt           DateTime          @default(now()) @map("created_at")
+  
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  @@index([bookingId])
+  @@index([actionType])
+  @@map("booking_history")
+}
+
+enum BookingActionType {
+  CREATED
+  MODIFIED_DATE
+  MODIFIED_CARS
+  MODIFIED_BOTH
+  CANCELLED
+  COMPLETED
+  PAYMENT_RECEIVED
+  REFUND_ISSUED
+}
