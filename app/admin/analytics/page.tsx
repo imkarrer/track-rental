@@ -2,8 +2,8 @@ import { prisma } from "@/lib/db/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-function fmtCurrency(value: number | null | undefined) {
-  return `$${(Number(value || 0)).toFixed(2)}`
+function fmtCurrency(value: unknown) {
+  return `$${Number(value || 0).toFixed(2)}`
 }
 
 export default async function AdminAnalyticsPage() {
