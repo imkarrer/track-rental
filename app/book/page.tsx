@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -48,7 +48,7 @@ interface SelectedCar {
   quantity: number
 }
 
-export default function BookPage() {
+function BookPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -2077,6 +2077,14 @@ const BOOKING_DRAFT_KEY = "bookingDraft"
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <BookPageContent />
+    </Suspense>
   )
 }
 

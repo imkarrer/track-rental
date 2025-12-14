@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export default function ActivatePage() {
+function ActivatePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -131,6 +131,14 @@ export default function ActivatePage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ActivatePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <ActivatePageContent />
+    </Suspense>
   )
 }
 

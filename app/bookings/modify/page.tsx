@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,7 +104,7 @@ type ModifySession = {
   paymentIntentId?: string | null
 }
 
-export default function ModifyBookingPage() {
+function ModifyBookingPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -1163,11 +1163,9 @@ export default function ModifyBookingPage() {
                     }}
                     onError={(error) => {
                       setGlobalError(
-                        error instanceof Error 
-                          ? error.message 
-                          : typeof error === 'string' 
-                            ? error 
-                            : 'Payment processing failed'
+                        typeof error === 'string' 
+                          ? error 
+                          : 'Payment processing failed'
                       )
                     }}
                     hideContactInfo={true}
@@ -1212,6 +1210,14 @@ export default function ModifyBookingPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function ModifyBookingPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <ModifyBookingPageContent />
+    </Suspense>
   )
 }
 

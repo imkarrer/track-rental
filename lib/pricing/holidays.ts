@@ -88,7 +88,7 @@ export async function getDayMultiplierDetails(date: Date): Promise<{ multiplier:
       multiplier: holidayMult,
       dayName: holidayName || "Holiday",
       isHoliday: true,
-      holidayName,
+      holidayName: holidayName ?? undefined,
     }
   }
 

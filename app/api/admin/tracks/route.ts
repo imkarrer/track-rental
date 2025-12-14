@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
     await requireAdmin()
 
     const body = await request.json()
-    console.log("Creating track with data:", { category: body.category, ...body })
+    console.log("Creating track with data:", body)
     const validatedData = trackSchema.parse(body)
-    console.log("Validated data:", { category: validatedData.category, ...validatedData })
+    console.log("Validated data:", validatedData)
 
     // Validate that selected cars match the track category
     if (validatedData.includedCarIds && validatedData.includedCarIds.length > 0) {

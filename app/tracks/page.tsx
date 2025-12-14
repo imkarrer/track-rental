@@ -8,6 +8,7 @@ interface Track {
   id: string
   name: string
   description?: string | null
+  category: "ROAD" | "OFFROAD"
   basePrice: number
   length: number
   width: number

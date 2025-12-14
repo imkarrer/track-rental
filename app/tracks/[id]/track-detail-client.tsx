@@ -76,8 +76,8 @@ export default function TrackDetailClient({ trackId }: TrackDetailClientProps) {
             const additionalCars = parsed.additionalCars || {}
             
             // Build selectedCars from both included and additional
-            const allSelected = new Set([
-              ...Array.from(includedCars),
+            const allSelected = new Set<string>([
+              ...Array.from(includedCars as Set<string>),
               ...Object.keys(additionalCars).filter(id => additionalCars[id] > 0)
             ])
             

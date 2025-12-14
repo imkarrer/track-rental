@@ -8,35 +8,15 @@ export type ReferralIncentiveConfig = {
 }
 
 export async function getReferralIncentive(): Promise<ReferralIncentiveConfig> {
-  const rec = await prisma.referralIncentive.findUnique({ where: { id: "default" } })
-  if (!rec) {
-    return { type: "PERCENT", percentOff: 10, applyOnce: true }
-  }
-  return {
-    type: (rec.type as "PERCENT" | "FLAT") ?? "PERCENT",
-    percentOff: rec.percentOff ? Number(rec.percentOff) : undefined,
-    amountOff: rec.amountOff ? Number(rec.amountOff) : undefined,
-    applyOnce: rec.applyOnce,
-  }
+  // Note: ReferralIncentive model no longer exists in Prisma schema
+  // Returning default values
+  return { type: "PERCENT", percentOff: 10, applyOnce: true }
 }
 
 export async function setReferralIncentive(config: ReferralIncentiveConfig) {
-  await prisma.referralIncentive.upsert({
-    where: { id: "default" },
-    update: {
-      type: config.type,
-      percentOff: config.percentOff ?? null,
-      amountOff: config.amountOff ?? null,
-      applyOnce: config.applyOnce,
-    },
-    create: {
-      id: "default",
-      type: config.type,
-      percentOff: config.percentOff ?? null,
-      amountOff: config.amountOff ?? null,
-      applyOnce: config.applyOnce,
-    },
-  })
+  // Note: ReferralIncentive model no longer exists in Prisma schema
+  // This function is a no-op for now
+  console.warn("setReferralIncentive called but ReferralIncentive model does not exist")
 }
 
 export function computeReferralDiscount(total: number, cfg: ReferralIncentiveConfig): number {

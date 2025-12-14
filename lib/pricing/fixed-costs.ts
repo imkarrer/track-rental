@@ -18,6 +18,7 @@ const DEFAULT_CONFIG: BreakEvenConfig = {
   averageDistanceMiles: 20,
   fuelCostPerMile: 0.5,
   apiEmailCosts: 0.11,
+  batteryCosts: 0,
   stripeFeeRate: 0.029,
   stripeFixedFee: 0.3,
 }
@@ -50,6 +51,7 @@ export async function getFixedCostsConfig(): Promise<BreakEvenConfig> {
       averageDistanceMiles: Number(config.averageDistanceMiles),
       fuelCostPerMile: Number(config.fuelCostPerMile),
       apiEmailCosts: Number(config.apiEmailCosts),
+      batteryCosts: DEFAULT_CONFIG.batteryCosts, // Track-specific, not from config
       stripeFeeRate: Number(config.stripeFeeRate),
       stripeFixedFee: Number(config.stripeFixedFee),
     }

@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
     await sendBookingNotifications({
       booking: booking as any,
       customerInfo: {
-        firstName: booking.user.firstName,
-        lastName: booking.user.lastName,
+        firstName: booking.user.firstName || "",
+        lastName: booking.user.lastName || "",
         email: booking.user.email,
         phone: booking.phone || "",
-        billingAddress: booking.billingAddress || "",
-        billingCity: booking.billingCity || "",
-        billingState: booking.billingState || "",
-        billingZip: booking.billingZip || "",
+        billingAddress: booking.eventAddress,
+        billingCity: booking.eventCity,
+        billingState: booking.eventState,
+        billingZip: booking.eventZip,
       },
     })
 

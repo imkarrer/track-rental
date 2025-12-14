@@ -39,7 +39,7 @@ export default async function RefundPolicyPage() {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold mb-4">Cancellation Terms</h2>
           {policies.map((policy) => {
-            const refundPercent = 100 - policy.nonRefundablePercent
+            const refundPercent = 100 - Number(policy.nonRefundablePercent)
             return (
               <Card key={policy.id}>
                 <CardHeader>

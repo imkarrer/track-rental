@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const redemption = await prisma.$transaction(async (tx) => {
       // Determine program based on owner (admin vs user)
       const programs = await getProgramConfigs()
-      const isOwnerAdmin = referral.owner.role === "ADMIN"
+      const isOwnerAdmin = referral.owner?.role === "ADMIN" || referral.ownerUserId === null
       const program = isOwnerAdmin ? programs.admin : programs.user
       if (!program.enabled) {
         throw new Error("Referral program disabled")

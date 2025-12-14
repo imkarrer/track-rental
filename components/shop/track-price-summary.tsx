@@ -63,11 +63,12 @@ export function TrackPriceSummary({ trackId, trackBasePrice }: TrackPriceSummary
           // Add additional cars
           Object.entries(additionalCars).forEach(([carId, quantity]) => {
             const car = cars.find((c: any) => c.id === carId)
-            if (car && quantity > 0) {
+            const qty = Number(quantity)
+            if (car && qty > 0) {
               selectedCars.push({
                 carId,
                 basePricePerDay: Number(car.basePricePerDay),
-                quantity: quantity as number,
+                quantity: qty,
               })
             }
           })

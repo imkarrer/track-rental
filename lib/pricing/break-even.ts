@@ -55,6 +55,7 @@ export interface BreakEvenResult {
 
 const DEFAULT_CONFIG: BreakEvenConfig = {
   unitCost: 2000,
+  carCosts: 0,
   expectedRentals: 60,
   monthlyRecurringCosts: 89.67,
   monthlyRentalsTarget: 4,
@@ -64,6 +65,7 @@ const DEFAULT_CONFIG: BreakEvenConfig = {
   averageDistanceMiles: 20,
   fuelCostPerMile: 0.5,
   apiEmailCosts: 0.11,
+  batteryCosts: 0,
   stripeFeeRate: 0.029,
   stripeFixedFee: 0.3,
 }

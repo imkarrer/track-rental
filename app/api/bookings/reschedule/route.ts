@@ -109,12 +109,12 @@ export async function POST(req: Request) {
     }
 
     // 3. Determine if old booking was multi-day
-    const wasMultiDay = booking.endDate && booking.endDate > booking.eventDate
+    const wasMultiDay = !!(booking.endDate && booking.endDate > booking.eventDate)
     const oldEventDateStr = toDateStringUTC(booking.eventDate)
     const oldEndDateStr = booking.endDate ? toDateStringUTC(booking.endDate) : null
     
     // 4. Determine if new booking will be multi-day
-    const willBeMultiDay = newEndDate && newEndDateUTC > newEventDateUTC
+    const willBeMultiDay = !!(newEndDate && newEndDateUTC !== null && newEndDateUTC > newEventDateUTC)
 
     // 5. Get existing car selection for old pricing calculation
     const oldCarsWithPrices = booking.bookingCars.map((bc) => ({
@@ -225,7 +225,12 @@ export async function POST(req: Request) {
     const daysUntilOriginalEvent = Math.floor(
       (booking.eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
-    const refundPercent = calculateRefundPercent(refundPolicies, daysUntilOriginalEvent)
+    // Convert Decimal to number for the calculation
+    const policiesAsNumbers = refundPolicies.map(p => ({
+      daysBeforeService: p.daysBeforeService,
+      nonRefundablePercent: Number(p.nonRefundablePercent)
+    }))
+    const refundPercent = calculateRefundPercent(policiesAsNumbers, daysUntilOriginalEvent)
 
     // 11. Calculate action and amount
     let action: "refund" | "payment" | "none" = "none"
@@ -396,8 +401,8 @@ export async function PUT(req: Request) {
     const newEndDateUTC = newEndDate ? toUTCStartOfDay(newEndDate) : null
 
     // Recalculate everything (same as POST) using multi-day aware logic
-    const wasMultiDay = booking.endDate && booking.endDate > booking.eventDate
-    const willBeMultiDay = newEndDate && newEndDateUTC > newEventDateUTC
+    const wasMultiDay = !!(booking.endDate && booking.endDate > booking.eventDate)
+    const willBeMultiDay = !!(newEndDate && newEndDateUTC !== null && newEndDateUTC > newEventDateUTC)
 
     // Get existing car selection
     const oldCarsWithPrices = booking.bookingCars.map((bc) => ({
@@ -510,7 +515,12 @@ export async function PUT(req: Request) {
     const daysUntilOriginalEvent = Math.floor(
       (booking.eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
-    const refundPercent = calculateRefundPercent(refundPolicies, daysUntilOriginalEvent)
+    // Convert Decimal to number for the calculation
+    const policiesAsNumbers = refundPolicies.map(p => ({
+      daysBeforeService: p.daysBeforeService,
+      nonRefundablePercent: Number(p.nonRefundablePercent)
+    }))
+    const refundPercent = calculateRefundPercent(policiesAsNumbers, daysUntilOriginalEvent)
 
     // Calculate refund or payment amount
     let totalRefundAmount = 0
@@ -525,10 +535,10 @@ export async function PUT(req: Request) {
     }
 
     // Process refund if needed
-    if (totalRefundAmount > 0 && booking.stripePaymentIntentId) {
+    if (totalRefundAmount > 0 && booking.paymentIntentId) {
       try {
         const refund = await stripe.refunds.create({
-          payment_intent: booking.stripePaymentIntentId,
+          payment_intent: booking.paymentIntentId,
           amount: Math.round(totalRefundAmount * 100),
           reason: "requested_by_customer",
           metadata: {

@@ -155,7 +155,7 @@ export function BreakEvenAnalysis({
     unitCostNum > 0 ? unitCostNum : null,
     setupTimeNum,
     carCosts,
-    { ...fixedCostsConfig, batteryCosts } || undefined
+    { ...fixedCostsConfig, batteryCosts }
   )
 
   if (!analysis) {

@@ -81,7 +81,7 @@ export async function convertReservationToBooking(reservationId: string) {
       subtotal: reservation.subtotal,
       tax: reservation.tax,
       total:
-        reservation.total -
+        Number(reservation.total) -
         Number(reservation.referralDiscount || 0) -
         Number(reservation.rewardDiscount || 0),
       status: "PENDING",

@@ -276,10 +276,10 @@ export function PriceBreakdown({
                 </div>
               )
             })}
-            {pricing.additionalCarsCount > 0 && (
+            {(pricing.additionalCarsCount ?? 0) > 0 && (
               <div className="flex justify-between font-medium pt-2 border-t">
                 <span>Additional Cars ({pricing.additionalCarsCount}):</span>
-                <span>${pricing.additionalCarsPrice.toFixed(2)}</span>
+                <span>${(pricing.additionalCarsPrice ?? 0).toFixed(2)}</span>
               </div>
             )}
           </div>

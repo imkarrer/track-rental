@@ -112,12 +112,12 @@ export async function POST(req: Request) {
     }
 
     // 3. Determine if old booking was multi-day
-    const wasMultiDay = booking.endDate && booking.endDate > booking.eventDate
+    const wasMultiDay = !!(booking.endDate && booking.endDate > booking.eventDate)
     const oldEventDateStr = toDateStringUTC(booking.eventDate)
     const oldEndDateStr = booking.endDate ? toDateStringUTC(booking.endDate) : null
     
     // 4. Determine if new booking will be multi-day
-    const willBeMultiDay = newEndDate && newEndDateUTC > newEventDateUTC
+    const willBeMultiDay = !!(newEndDate && newEndDateUTC !== null && newEndDateUTC > newEventDateUTC)
 
     // 5. Get existing car selection for old pricing calculation
     const oldCarsWithPrices = booking.bookingCars.map((bc) => ({
@@ -452,8 +452,8 @@ export async function PUT(req: Request) {
     const newEndDateUTC = newEndDate ? toUTCStartOfDay(newEndDate) : null
 
     // Recalculate everything (same as POST) using multi-day aware logic
-    const wasMultiDay = booking.endDate && booking.endDate > booking.eventDate
-    const willBeMultiDay = newEndDate && newEndDateUTC > newEventDateUTC
+    const wasMultiDay = !!(booking.endDate && booking.endDate > booking.eventDate)
+    const willBeMultiDay = !!(newEndDate && newEndDateUTC !== null && newEndDateUTC > newEventDateUTC)
 
     // Get existing car selection
     const oldCarsWithPrices = booking.bookingCars.map((bc) => ({
@@ -602,10 +602,10 @@ export async function PUT(req: Request) {
     const refundPercent = modifyFinancials.refundablePercent
 
     // Process refund if needed
-    if (totalRefundAmount > 0 && booking.stripePaymentIntentId) {
+    if (totalRefundAmount > 0 && booking.paymentIntentId) {
       try {
         const refund = await stripe.refunds.create({
-          payment_intent: booking.stripePaymentIntentId,
+          payment_intent: booking.paymentIntentId,
           amount: Math.round(totalRefundAmount * 100),
           reason: "requested_by_customer",
           metadata: {

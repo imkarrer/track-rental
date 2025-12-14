@@ -47,7 +47,7 @@ async function initBucket() {
     console.log("   Console: http://localhost:9001")
     console.log("   Login: minioadmin / minioadmin")
   } catch (error) {
-    if (error.name === "BucketAlreadyOwnedByYou") {
+    if (error && typeof error === "object" && "name" in error && error.name === "BucketAlreadyOwnedByYou") {
       console.log(`✅ Bucket "${bucketName}" already exists`)
     } else {
       console.error("Error initializing bucket:", error)

@@ -51,7 +51,7 @@ export default async function UserBookingsPage({
     id: b.id,
     trackName: b.track?.name ?? "Track",
     trackId: b.trackId,
-    eventDate: toDateStringUTC(b.eventDate), // YYYY-MM-DD format
+    eventDate: toDateStringUTC(b.eventDate) ?? "", // YYYY-MM-DD format
     endDate: b.endDate ? toDateStringUTC(b.endDate) : null,
     total: Number(b.total ?? 0),
     status: b.status,

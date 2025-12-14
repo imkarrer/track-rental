@@ -50,11 +50,13 @@ function NumberInput({
   onChange,
   min = 0,
   max,
+  disabled,
 }: {
   value?: number
   onChange: (n: number) => void
   min?: number
   max?: number
+  disabled?: boolean
 }) {
   return (
     <Input
@@ -63,6 +65,7 @@ function NumberInput({
       value={value ?? 0}
       min={min}
       max={max}
+      disabled={disabled}
       onChange={(e) => onChange(Number(e.target.value))}
     />
   )

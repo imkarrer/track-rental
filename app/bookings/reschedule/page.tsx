@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -89,7 +89,7 @@ type RescheduleSession = {
   paymentIntentId?: string | null
 }
 
-export default function ReschedulePage() {
+function ReschedulePageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -888,14 +888,8 @@ export default function ReschedulePage() {
                       💳 Additional Payment: ${preview.amount.toFixed(2)}
                     </p>
                     <div className="text-sm text-orange-700 mt-2 space-y-1">
-                      <p>Change summary:</p>
-                      <ul className="list-disc list-inside text-orange-800">
-                        <li>Track/day change: ${preview.breakdown?.deltas?.trackPrice?.toFixed?.(2) ?? "0.00"}</li>
-                        <li>Cars change: ${preview.breakdown?.deltas?.additionalCarsPrice?.toFixed?.(2) ?? "0.00"}</li>
-                        <li>Tax change: ${preview.breakdown?.deltas?.tax?.toFixed?.(2) ?? "0.00"}</li>
-                      </ul>
                       <p className="text-xs text-orange-600">
-                        Total difference (after promo): ${preview.breakdown?.deltas?.totalWithPromo?.toFixed?.(2) ?? preview.amount.toFixed(2)}
+                        Total difference (after promo): ${preview.amount.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -997,7 +991,7 @@ export default function ReschedulePage() {
                     Change Date
                   </Button>
                   <Button
-                    onClick={handleConfirmReschedule}
+                    onClick={() => handleConfirmReschedule()}
                     disabled={!refundPolicyAcknowledged || confirming}
                     className="flex-1"
                   >
@@ -1010,6 +1004,14 @@ export default function ReschedulePage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function ReschedulePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <ReschedulePageContent />
+    </Suspense>
   )
 }
 
