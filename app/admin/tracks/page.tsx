@@ -46,7 +46,6 @@ export default async function AdminTracksPage() {
         basePricePerDay: Number(car.basePricePerDay),
         unitCost: car.unitCost ? Number(car.unitCost) : null,
         createdAt: car.createdAt ? car.createdAt.toISOString() : new Date().toISOString(),
-        updatedAt: car.updatedAt ? car.updatedAt.toISOString() : new Date().toISOString(),
       }))
 
       // Calculate total car costs
