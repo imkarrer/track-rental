@@ -11,6 +11,13 @@ config({ path: resolve(process.cwd(), '.env') })
 const prisma = new PrismaClient()
 
 /**
+ * Check if we're running in CI environment
+ */
+function isCI(): boolean {
+  return process.env.CI === 'true' || process.env.E2E_CI === 'true'
+}
+
+/**
  * E2E Test Seeding Script
  * 
  * This script ensures a test admin user exists for E2E tests.
@@ -165,11 +172,276 @@ async function seedTestTrack(): Promise<string | null> {
   return track.id
 }
 
+/**
+ * Seed tracks for E2E tests
+ * Creates a few basic tracks that tests can select from
+ */
+async function seedTracksForE2E() {
+  console.log('🏁 Seeding tracks for E2E tests...')
+  
+  const tracks = [
+    {
+      name: 'Pro Road Circuit',
+      description: 'Professional-grade asphalt track perfect for high-speed RC car racing.',
+      category: 'ROAD' as TrackCategory,
+      length: 50,
+      width: 30,
+      minSpaceLength: 55,
+      minSpaceWidth: 35,
+      unitCost: 2500,
+      basePrice: 299,
+      setupTimeMinutes: 60,
+    },
+    {
+      name: 'Off-Road Adventure Track',
+      description: 'Challenging dirt track with jumps and obstacles.',
+      category: 'OFFROAD' as TrackCategory,
+      length: 45,
+      width: 28,
+      minSpaceLength: 50,
+      minSpaceWidth: 33,
+      unitCost: 3000,
+      basePrice: 349,
+      setupTimeMinutes: 90,
+    },
+  ]
+  
+  const createdTracks = []
+  
+  for (const trackData of tracks) {
+    const existing = await prisma.track.findFirst({
+      where: { name: trackData.name },
+    })
+    
+    if (existing) {
+      console.log(`   ⏭️  Track "${trackData.name}" already exists`)
+      createdTracks.push(existing)
+      continue
+    }
+    
+    const track = await prisma.track.create({
+      data: {
+        ...trackData,
+        includedCarIds: [], // Will be updated after cars are created
+        imageUrls: [],
+        isActive: true,
+        testOnly: false, // Visible to tests
+      },
+    })
+    
+    console.log(`   ✅ Created track: ${trackData.name}`)
+    createdTracks.push(track)
+  }
+  
+  return createdTracks
+}
+
+/**
+ * Seed cars for E2E tests
+ * Creates cars that match the tracks
+ */
+async function seedCarsForE2E() {
+  console.log('🏎️  Seeding cars for E2E tests...')
+  
+  const cars = [
+    {
+      name: 'Lightning Road Racer',
+      description: '1/10 scale high-speed on-road RC car.',
+      category: 'ROAD' as CarCategory,
+      type: '1/10 scale',
+      unitCost: 250,
+      basePricePerDay: 25,
+      stockQuantity: 8,
+    },
+    {
+      name: 'Thunder Road Pro',
+      description: 'Professional 1/10 scale touring car.',
+      category: 'ROAD' as CarCategory,
+      type: '1/10 scale',
+      unitCost: 350,
+      basePricePerDay: 35,
+      stockQuantity: 6,
+    },
+    {
+      name: 'Dirt Devil Buggy',
+      description: '1/10 scale off-road buggy with 4WD.',
+      category: 'OFFROAD' as CarCategory,
+      type: '1/10 scale',
+      unitCost: 300,
+      basePricePerDay: 30,
+      stockQuantity: 10,
+    },
+    {
+      name: 'Monster Truck Max',
+      description: 'Massive 1/8 scale monster truck.',
+      category: 'OFFROAD' as CarCategory,
+      type: '1/8 scale',
+      unitCost: 400,
+      basePricePerDay: 40,
+      stockQuantity: 5,
+    },
+  ]
+  
+  const createdCars = []
+  
+  for (const carData of cars) {
+    const existing = await prisma.car.findFirst({
+      where: { name: carData.name },
+    })
+    
+    if (existing) {
+      console.log(`   ⏭️  Car "${carData.name}" already exists`)
+      createdCars.push(existing)
+      continue
+    }
+    
+    const car = await prisma.car.create({
+      data: {
+        ...carData,
+        imageUrls: [],
+        isActive: true,
+      },
+    })
+    
+    console.log(`   ✅ Created car: ${carData.name}`)
+    createdCars.push(car)
+  }
+  
+  return createdCars
+}
+
+/**
+ * Update tracks with included car IDs
+ */
+async function updateTracksWithCars(tracks: any[], cars: any[]) {
+  console.log('🔗 Linking tracks with included cars...')
+  
+  for (const track of tracks) {
+    // Filter cars by category matching track
+    const matchingCars = cars.filter(car => car.category === track.category)
+    
+    if (matchingCars.length >= 2) {
+      // Select first 2 cars
+      const includedCarIds = [matchingCars[0].id, matchingCars[1].id]
+      
+      await prisma.track.update({
+        where: { id: track.id },
+        data: { includedCarIds },
+      })
+      
+      console.log(`   ✅ Updated "${track.name}" with 2 included cars`)
+    }
+  }
+}
+
+/**
+ * Seed essential configuration data for E2E tests
+ */
+async function seedEssentialConfig() {
+  console.log('⚙️  Seeding essential configuration...')
+  
+  // Seed day multipliers
+  const days = [
+    { dayOfWeek: 0, multiplier: 1.3, dayName: 'Sunday' },
+    { dayOfWeek: 1, multiplier: 1.0, dayName: 'Monday' },
+    { dayOfWeek: 2, multiplier: 1.0, dayName: 'Tuesday' },
+    { dayOfWeek: 3, multiplier: 1.0, dayName: 'Wednesday' },
+    { dayOfWeek: 4, multiplier: 1.1, dayName: 'Thursday' },
+    { dayOfWeek: 5, multiplier: 1.2, dayName: 'Friday' },
+    { dayOfWeek: 6, multiplier: 1.4, dayName: 'Saturday' },
+  ]
+  
+  for (const day of days) {
+    const existing = await prisma.dayMultiplier.findUnique({
+      where: { dayOfWeek: day.dayOfWeek },
+    })
+    
+    if (!existing) {
+      await prisma.dayMultiplier.create({
+        data: { dayOfWeek: day.dayOfWeek, multiplier: day.multiplier },
+      })
+      console.log(`   ✅ Created multiplier for ${day.dayName}`)
+    }
+  }
+  
+  // Seed pricing config
+  const configs = [
+    { key: 'tax_rate', value: 0.0725 },
+    { key: 'base_distance_miles', value: 20 },
+    { key: 'per_mile_charge', value: 2.5 },
+  ]
+  
+  for (const config of configs) {
+    const existing = await prisma.pricingConfig.findUnique({
+      where: { configKey: config.key },
+    })
+    
+    if (!existing) {
+      await prisma.pricingConfig.create({
+        data: {
+          configKey: config.key,
+          configValue: config.value,
+          description: `${config.key} configuration`,
+        },
+      })
+      console.log(`   ✅ Created config: ${config.key}`)
+    }
+  }
+  
+  // Seed refund policies
+  const policies = [
+    { daysBeforeService: 30, nonRefundablePercent: 10 },
+    { daysBeforeService: 14, nonRefundablePercent: 25 },
+    { daysBeforeService: 7, nonRefundablePercent: 50 },
+    { daysBeforeService: 3, nonRefundablePercent: 75 },
+    { daysBeforeService: 0, nonRefundablePercent: 100 },
+  ]
+  
+  for (const policy of policies) {
+    const existing = await prisma.refundPolicy.findUnique({
+      where: { daysBeforeService: policy.daysBeforeService },
+    })
+    
+    if (!existing) {
+      await prisma.refundPolicy.create({
+        data: {
+          ...policy,
+          description: `${policy.daysBeforeService}+ days: ${policy.nonRefundablePercent}% non-refundable`,
+        },
+      })
+      console.log(`   ✅ Created refund policy: ${policy.daysBeforeService} days`)
+    }
+  }
+}
+
 async function main() {
   try {
     await seedE2ETestUser()
     console.log('')
     
+    // In CI environments, always seed tracks and cars for tests
+    // In production/preview environments, only seed if CREATE_TEST_TRACK is set
+    if (isCI() || process.env.SEED_E2E_DATA === 'true') {
+      console.log('🌱 Seeding E2E test data (tracks, cars, config)...')
+      console.log('')
+      
+      const tracks = await seedTracksForE2E()
+      console.log('')
+      
+      const cars = await seedCarsForE2E()
+      console.log('')
+      
+      await updateTracksWithCars(tracks, cars)
+      console.log('')
+      
+      await seedEssentialConfig()
+      console.log('')
+      
+      console.log(`✅ Seeded ${tracks.length} tracks and ${cars.length} cars for E2E tests`)
+      console.log('')
+    }
+    
+    // Optionally create a test-only track for production testing
     const testTrackId = await seedTestTrack()
     
     console.log('')
