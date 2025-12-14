@@ -14,7 +14,7 @@ A web application for renting RC car tracks and RC cars for events, with dynamic
 - [Project Structure](#project-structure)
 - [Testing](#testing)
 - [Features](#features)
-- [Architecture Overview](#architecture-overview)
+- [Architecture Overview](#architecture-overview) | [Flow Diagrams →](ARCHITECTURE.md)
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
 
@@ -470,6 +470,15 @@ This is a complete, production-ready application with:
 - **API Routes:** All backend logic in `/app/api/`
 - **Server Components:** Used throughout for optimal performance
 - **Prisma Date Handling:** String comparisons for `@db.Date` fields to avoid timezone bugs (see `.cursor/rules/date-handling-rule/RULE.md`)
+
+### Flow Diagrams
+
+For detailed sequence diagrams of user and admin operations, see **[ARCHITECTURE.md](ARCHITECTURE.md)**:
+
+- **User Operations:** Registration, booking a track, modifying bookings, cancellations
+- **Admin Operations:** Booking management, refunds, track/car management
+- **Payment Flows:** Stripe webhook processing, reservation-to-booking conversion
+- **Cron Jobs:** Cleanup tasks, reminder notifications
 
 ---
 
