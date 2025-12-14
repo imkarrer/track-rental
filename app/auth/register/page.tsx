@@ -96,7 +96,7 @@ export default function RegisterPage() {
                   <span className="font-semibold">Account Created!</span>
                 </div>
                 <p className="text-sm">
-                  We've sent an activation link to <strong>{formData.email}</strong>
+                  We&apos;ve sent an activation link to <strong>{formData.email}</strong>
                 </p>
               </div>
               
@@ -111,7 +111,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="text-center text-sm text-gray-600">
-                <p className="mb-2">Didn't receive the email?</p>
+                <p className="mb-2">Didn&apos;t receive the email?</p>
                 <Button 
                   variant="outline" 
                   size="sm"

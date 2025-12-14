@@ -912,7 +912,7 @@ export default function ModifyBookingPage() {
                         {/* Extension Notice */}
                         <div className="bg-blue-50 p-3 rounded border border-blue-200">
                           <p className="text-sm text-blue-800 font-medium">
-                            📅 You're extending your existing booking - no cancellation fees!
+                            📅 You&apos;re extending your existing booking - no cancellation fees!
                           </p>
                         </div>
 
@@ -1109,7 +1109,7 @@ export default function ModifyBookingPage() {
                   {preview.modifyCalculation?.isExtension && (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded">
                       <p className="text-sm text-blue-800">
-                        ℹ️ <strong>Note:</strong> Since you're extending your existing booking, no cancellation fees apply. 
+                        ℹ️ <strong>Note:</strong> Since you&apos;re extending your existing booking, no cancellation fees apply. 
                         The refund policy below is shown for reference and applies to future changes or cancellations.
                       </p>
                     </div>

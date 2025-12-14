@@ -1419,7 +1419,7 @@ const BOOKING_DRAFT_KEY = "bookingDraft"
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800 font-semibold flex items-center gap-2">
               <span className="text-lg">✓</span>
-              Welcome back! We've restored your reservation.
+              Welcome back! We&apos;ve restored your reservation.
             </p>
             <p className="text-xs text-green-700 mt-1">
               Time remaining: {Math.floor(reservationTimeRemaining / 60)}:{String(reservationTimeRemaining % 60).padStart(2, '0')} minutes

@@ -33,6 +33,7 @@ export function TrackCarSelection({
 
   useEffect(() => {
     fetchCars()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category])
 
   const fetchCars = async () => {

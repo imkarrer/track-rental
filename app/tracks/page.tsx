@@ -37,6 +37,7 @@ export default function TracksPage() {
 
   useEffect(() => {
     fetchTracks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryFilter])
 
   const filteredTracks = tracks.filter(

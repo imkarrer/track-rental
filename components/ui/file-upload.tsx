@@ -154,6 +154,7 @@ export function FileUpload({
               {uploadedUrls.map((url, index) => (
                 <div key={index} className="relative group">
                   <div className="w-full h-48 bg-gray-100 rounded-lg border border-gray-200 shadow-sm p-2 flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
                       alt={`Upload ${index + 1}`}

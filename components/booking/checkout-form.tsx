@@ -354,6 +354,7 @@ export function CheckoutForm({
       .finally(() => {
         setLoading(false)
       })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId])
 
   if (!stripePromise) {

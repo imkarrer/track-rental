@@ -48,6 +48,7 @@ export function BookingHistory({ bookingId }: BookingHistoryProps) {
 
   useEffect(() => {
     fetchHistory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId])
 
   const fetchHistory = async () => {

@@ -332,7 +332,7 @@ export function AdminPromoCodesManager() {
                             </div>
                             {code.name && (
                               <div className="text-lg font-semibold text-gray-700">
-                                "{code.name}"
+                                &quot;{code.name}&quot;
                               </div>
                             )}
                             <Badge variant={code.isActive ? "default" : "secondary"}>

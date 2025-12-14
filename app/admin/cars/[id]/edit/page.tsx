@@ -30,6 +30,7 @@ export default function EditCarPage({
 
   useEffect(() => {
     fetchCar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchCar = async () => {

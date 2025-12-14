@@ -156,6 +156,7 @@ export function TrackPriceSummary({ trackId, trackBasePrice }: TrackPriceSummary
       window.removeEventListener("storage", handleStorageChange)
       window.removeEventListener("carSelectionChanged", handleCustomStorageChange)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackId, trackBasePrice])
 
   if (loading) {

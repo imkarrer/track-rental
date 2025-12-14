@@ -154,6 +154,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
     }
     
     // Session is now fully loaded and ready
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 })

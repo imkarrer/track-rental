@@ -58,7 +58,7 @@ export default async function AdminReferralsPage() {
             <p className="font-semibold text-blue-700 mb-1">🎟️ Admin Promotional Codes</p>
             <p>
               Create custom codes for advertising campaigns, special offers, and marketing initiatives.
-              Examples: "SUMMER2025", "LAUNCH50", "FREESHIP". These are managed by admins and can be 
+              Examples: &quot;SUMMER2025&quot;, &quot;LAUNCH50&quot;, &quot;FREESHIP&quot;. These are managed by admins and can be 
               named, edited, and deactivated.
             </p>
           </div>
