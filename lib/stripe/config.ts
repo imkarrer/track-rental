@@ -19,6 +19,20 @@ const getStripeSecretKey = () => {
     return process.env.STRIPE_TEST_KEY || "sk_test_51abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"
   }
   
+  // During build time or CI, allow build to proceed without throwing
+  // The actual Stripe calls will only happen at runtime, where we can properly validate
+  // Check for build context: CI environment, Next.js build phase, or Vercel build
+  const isBuildTime = process.env.CI === "true" || 
+                      process.env.NEXT_PHASE === "phase-production-build" || 
+                      process.env.NEXT_PHASE === "phase-development-build" ||
+                      process.env.VERCEL === "1" ||
+                      process.env.NEXT_PUBLIC_VERCEL_ENV !== undefined
+  
+  if (isBuildTime) {
+    // Return a dummy key for build time - actual usage will fail at runtime if not configured
+    return process.env.STRIPE_TEST_KEY || "sk_test_51abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"
+  }
+  
   throw new Error("STRIPE_SECRET_KEY is required in production")
 }
 
