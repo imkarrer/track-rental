@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MyReferral } from "@/components/profile/my-referral"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
   const session = await requireAuth()
   

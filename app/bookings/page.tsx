@@ -7,6 +7,9 @@ import { toDateStringUTC } from "@/lib/date/format"
 import Link from "next/link"
 import { UserBookingsList } from "@/components/booking/user-bookings-list"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function UserBookingsPage({
   searchParams,
 }: {

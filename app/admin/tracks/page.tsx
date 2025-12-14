@@ -8,6 +8,9 @@ import { getFixedCostsConfig } from "@/lib/pricing/fixed-costs"
 import { calculateBatteryCosts } from "@/lib/pricing/battery-costs"
 import { calculateChargerCosts } from "@/lib/pricing/charger-costs"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function AdminTracksPage() {
   const tracks = await prisma.track.findMany({
     orderBy: { createdAt: "desc" },

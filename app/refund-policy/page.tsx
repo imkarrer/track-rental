@@ -1,11 +1,22 @@
 import { prisma } from "@/lib/db/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Mark this page as dynamic to prevent prerendering during build
+export const dynamic = 'force-dynamic'
+
 export default async function RefundPolicyPage() {
-  const policies = await prisma.refundPolicy.findMany({
-    where: { isActive: true },
-    orderBy: { daysBeforeService: "desc" },
-  })
+  // Handle case where database might not be available during build
+  let policies = []
+  try {
+    policies = await prisma.refundPolicy.findMany({
+      where: { isActive: true },
+      orderBy: { daysBeforeService: "desc" },
+    })
+  } catch (error) {
+    // During build time or if database is unavailable, show empty state
+    // This allows the build to succeed
+    console.warn("Could not fetch refund policies:", error instanceof Error ? error.message : String(error))
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

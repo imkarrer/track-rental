@@ -2,6 +2,9 @@ import { prisma } from "@/lib/db/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 function fmtCurrency(value: unknown) {
   return `$${Number(value || 0).toFixed(2)}`
 }

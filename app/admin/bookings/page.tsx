@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { formatDateUTC } from "@/lib/date/format"
 import { ReminderSchedule } from "@/components/admin/reminder-schedule"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function AdminBookingsPage() {
   const bookings = await prisma.booking.findMany({
     include: {

@@ -2,6 +2,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { prisma } from "@/lib/db/prisma"
 
+// Mark as dynamic to prevent prerendering (uses database)
+export const dynamic = 'force-dynamic'
+
 const DEFAULT_DAY_MULTIPLIERS: Record<number, number> = {
   0: 1.3,
   1: 1.0,

@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function AdminCarsPage() {
   const cars = await prisma.car.findMany({
     orderBy: { createdAt: "desc" },

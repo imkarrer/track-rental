@@ -9,6 +9,9 @@ import { CommunicationPanel } from "@/components/admin/communication-panel"
 import { serializeBookingForClient } from "@/lib/bookings/serialize"
 import { BookingHistory } from "@/components/booking/booking-history"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function BookingDetailPage({
   params,
 }: {

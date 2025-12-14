@@ -15,7 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 // IMPORTANT: Must use REAL Stripe test keys from https://dashboard.stripe.com/test/apikeys
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
 
-if (!publishableKey) {
+// Only log error if not in build time (during build, this is expected)
+if (!publishableKey && typeof window !== "undefined") {
   console.error("Stripe publishable key missing. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.")
 }
 

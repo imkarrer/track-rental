@@ -4,6 +4,9 @@ import { ReferralProgramConfigCard } from "@/components/admin/referral-program-c
 import { AdminPromoCodesManager } from "@/components/admin/admin-promo-codes"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Mark as dynamic to prevent prerendering (requires auth and database)
+export const dynamic = 'force-dynamic'
+
 export default async function AdminReferralsPage() {
   let userCodes: any[] = []
   try {
