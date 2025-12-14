@@ -89,13 +89,14 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   /* 
    * For local development (test:e2e:local), Playwright starts the dev server automatically
-   * For CI testing (test:e2e:ci), the e2e-ci.sh script manages the server lifecycle
+   * For CI testing, Playwright builds and starts the production server
    * For preview testing (E2E_PREVIEW), we test against the deployed URL directly
+   * Set E2E_CI=true to disable webServer (when workflow manages server manually)
    */
   webServer: (process.env.E2E_CI || process.env.E2E_PREVIEW) ? undefined : {
-    command: 'npm run dev',
+    command: process.env.CI ? 'npm run start:ci' : 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for dev server to start
+    reuseExistingServer: !process.env.CI, // In CI, always start fresh; locally, reuse if available
+    timeout: process.env.CI ? 180 * 1000 : 120 * 1000, // 3 min for CI build+start, 2 min for dev
   },
 })

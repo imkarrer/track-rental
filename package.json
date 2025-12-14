@@ -9,6 +9,7 @@
     "build:local": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
+    "start:ci": "npm run build:local && npm run start",
     "lint": "next lint",
     "test": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",

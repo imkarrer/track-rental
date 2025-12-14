@@ -100,36 +100,28 @@ jobs:
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD || 'testpassword123' }}
         run: npx tsx scripts/e2e-seed.ts
 
-      - name: Build and start Next.js
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rc_track_rental
-          NEXTAUTH_SECRET: test-secret-for-ci-environment
-          NEXTAUTH_URL: http://localhost:3000
-          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY || 'sk_test_mock' }}
-          STRIPE_WEBHOOK_SECRET: whsec_mock_for_ci
-          USE_STRIPE_MOCK: 'true'
-          USE_GOOGLE_MAPS_MOCK: 'true'
-          USE_EMAIL_MOCK: 'true'
-        run: |
-          npm run build:local
-          npm run start &
-          npx wait-on http://localhost:3000 --timeout 60000
-
       - name: Run E2E tests
         env:
+          # Server runtime environment variables (needed by Playwright's webServer)
           BASE_URL: http://localhost:3000
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rc_track_rental
           NEXTAUTH_SECRET: test-secret-for-ci-environment
           NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          # Stripe configuration (code uses STRIPE_SECRET_KEY, not STRIPE_API_KEY)
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_API_KEY || 'sk_test_mock' }}
+          STRIPE_WEBHOOK_SECRET: whsec_mock_for_ci
+          # Mock services
+          USE_STRIPE_MOCK: 'true'
+          USE_GOOGLE_MAPS_MOCK: 'true'
+          USE_EMAIL_MOCK: 'true'
+          # Test user credentials
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL || 'test@example.com' }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD || 'testpassword123' }}
           TEST_STRIPE_CARD_NUMBER: '4242424242424242'
           TEST_STRIPE_CARD_EXPIRY: '12/34'
           TEST_STRIPE_CARD_CVC: '123'
           TEST_STRIPE_CARD_ZIP: '90001'
-          USE_STRIPE_MOCK: 'true'
-          USE_GOOGLE_MAPS_MOCK: 'true'
-          USE_EMAIL_MOCK: 'true'
         run: npx playwright test
 
       - name: Upload test results
