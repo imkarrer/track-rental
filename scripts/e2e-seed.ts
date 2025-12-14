@@ -358,7 +358,11 @@ async function seedEssentialConfig() {
     
     if (!existing) {
       await prisma.dayMultiplier.create({
-        data: { dayOfWeek: day.dayOfWeek, multiplier: day.multiplier },
+        data: { 
+          dayOfWeek: day.dayOfWeek, 
+          multiplier: day.multiplier,
+          dayName: day.dayName,
+        },
       })
       console.log(`   ✅ Created multiplier for ${day.dayName}`)
     }
