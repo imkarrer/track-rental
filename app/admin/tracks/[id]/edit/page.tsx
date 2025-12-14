@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,8 +12,9 @@ import { TrackCarSelection } from "@/components/admin/track-car-selection"
 export default function EditTrackPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -41,7 +42,7 @@ export default function EditTrackPage({
 
   const fetchTrack = async () => {
     try {
-      const response = await fetch(`/api/tracks/${params.id}`)
+      const response = await fetch(`/api/tracks/${id}`)
       const data = await response.json()
       const track = data.track
 
@@ -86,7 +87,7 @@ export default function EditTrackPage({
     setSaving(true)
 
     try {
-      const response = await fetch(`/api/admin/tracks/${params.id}`, {
+      const response = await fetch(`/api/admin/tracks/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

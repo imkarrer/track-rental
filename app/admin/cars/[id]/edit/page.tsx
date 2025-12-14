@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,9 @@ import { CarBreakEvenAnalysis } from "@/components/admin/car-break-even-analysis
 export default function EditCarPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,7 +36,7 @@ export default function EditCarPage({
 
   const fetchCar = async () => {
     try {
-      const response = await fetch(`/api/cars/${params.id}`)
+      const response = await fetch(`/api/cars/${id}`)
       const data = await response.json()
       const car = data.car
 
@@ -75,7 +76,7 @@ export default function EditCarPage({
     setSaving(true)
 
     try {
-      const response = await fetch(`/api/admin/cars/${params.id}`, {
+      const response = await fetch(`/api/admin/cars/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

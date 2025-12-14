@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth/middleware"
 import { prisma } from "@/lib/db/prisma"
 import { z } from "zod"
-import { getStandardHolidaysForYear } from "@/lib/pricing/holidays"
+import { getFederalHolidaysForYear } from "@/lib/holidays/us-federal"
 
 const holidaySchema = z.object({
   name: z.string().min(1),
@@ -85,8 +85,8 @@ export async function PUT(request: NextRequest) {
       const nextYear = currentYear + 1
 
       // Get standard holidays for both years
-      const currentYearHolidays = getStandardHolidaysForYear(currentYear)
-      const nextYearHolidays = getStandardHolidaysForYear(nextYear)
+      const currentYearHolidays = getFederalHolidaysForYear(currentYear)
+      const nextYearHolidays = getFederalHolidaysForYear(nextYear)
 
       // Create holidays (skip if they already exist)
       // Ensure dates are normalized correctly for PostgreSQL DATE storage
@@ -106,13 +106,13 @@ export async function PUT(request: NextRequest) {
 
       const holidaysToCreate = [
         ...currentYearHolidays.map((h) => ({
-          name: h.name,
+          name: h.rule.name,
           date: normalizeDateForDB(h.date),
           isRecurring: true,
           isActive: true,
         })),
         ...nextYearHolidays.map((h) => ({
-          name: h.name,
+          name: h.rule.name,
           date: normalizeDateForDB(h.date),
           isRecurring: true,
           isActive: true,

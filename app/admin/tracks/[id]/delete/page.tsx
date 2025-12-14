@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 export default function DeleteTrackPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
@@ -22,7 +23,7 @@ export default function DeleteTrackPage({
 
   const fetchTrack = async () => {
     try {
-      const response = await fetch(`/api/tracks/${params.id}`)
+      const response = await fetch(`/api/tracks/${id}`)
       const data = await response.json()
       setTrackName(data.track.name)
     } catch (error) {
@@ -40,7 +41,7 @@ export default function DeleteTrackPage({
     setDeleting(true)
 
     try {
-      const response = await fetch(`/api/admin/tracks/${params.id}`, {
+      const response = await fetch(`/api/admin/tracks/${id}`, {
         method: "DELETE",
       })
 

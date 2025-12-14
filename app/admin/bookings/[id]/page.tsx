@@ -12,10 +12,11 @@ import { BookingHistory } from "@/components/booking/booking-history"
 export default async function BookingDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const booking = await prisma.booking.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: true,
       track: true,
