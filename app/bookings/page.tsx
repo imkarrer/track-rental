@@ -10,14 +10,15 @@ import { UserBookingsList } from "@/components/booking/user-bookings-list"
 export default async function UserBookingsPage({
   searchParams,
 }: {
-  searchParams: { modifySuccess?: string }
+  searchParams: Promise<{ modifySuccess?: string }>
 }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     redirect("/auth/login")
   }
 
-  const showSuccessMessage = searchParams.modifySuccess === "true"
+  const { modifySuccess } = await searchParams
+  const showSuccessMessage = modifySuccess === "true"
 
   const bookings = await prisma.booking.findMany({
     where: { userId: session.user.id },

@@ -14,7 +14,7 @@ const updatePromoSchema = z.object({
 // PATCH - Update promotional code
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -22,12 +22,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const data = updatePromoSchema.parse(body)
 
     // Verify it's an admin code
     const existingCode = await prisma.referralCode.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingCode) {
@@ -44,7 +45,7 @@ export async function PATCH(
 
     // Update the code
     const updatedCode = await prisma.referralCode.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
@@ -75,7 +76,7 @@ export async function PATCH(
 // DELETE - Delete promotional code
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -83,9 +84,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     // Verify it's an admin code
     const existingCode = await prisma.referralCode.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingCode) {
@@ -102,7 +104,7 @@ export async function DELETE(
 
     // Delete the code
     await prisma.referralCode.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

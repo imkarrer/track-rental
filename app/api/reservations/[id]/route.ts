@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db/prisma"
 // GET - Check reservation status and extend if needed
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,8 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const reservation = await prisma.reservation.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         track: true,
       },
@@ -77,7 +78,7 @@ export async function GET(
 // DELETE - Cancel reservation
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -85,8 +86,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const reservation = await prisma.reservation.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!reservation) {
@@ -98,7 +100,7 @@ export async function DELETE(
     }
 
     await prisma.reservation.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
@@ -114,7 +116,7 @@ export async function DELETE(
 // PATCH - Update reservation with car selection and pricing
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -122,8 +124,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const reservation = await prisma.reservation.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!reservation) {
@@ -150,7 +153,7 @@ export async function PATCH(
 
     // Update reservation
     const updatedReservation = await prisma.reservation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         selectedCars: selectedCars || reservation.selectedCars,
         basePrice: pricing?.basePrice !== undefined ? pricing.basePrice : reservation.basePrice,

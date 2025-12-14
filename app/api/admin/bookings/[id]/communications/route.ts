@@ -17,13 +17,14 @@ const createSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin()
+    const { id } = await params
 
     const logs = await prisma.communicationLog.findMany({
-      where: { bookingId: params.id },
+      where: { bookingId: id },
       orderBy: { createdAt: "desc" },
     })
 
@@ -39,15 +40,16 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin()
+    const { id } = await params
     const body = await request.json()
     const data = createSchema.parse(body)
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { user: true, track: true },
     })
     if (!booking) {

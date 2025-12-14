@@ -19,7 +19,7 @@ const refundSchema = z.object({
 // POST - Process a refund for a booking
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -27,6 +27,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const data = refundSchema.parse(body)
 
@@ -62,7 +63,7 @@ export async function POST(
 
     // Fetch booking with payment intent
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         refunds: true,
       },
@@ -100,7 +101,7 @@ export async function POST(
     if (data.selectiveRefund && data.adminOverride) {
       // Selective refund with override: can refund up to original amount minus already refunded
       // This allows refunding rescheduling penalties
-      const breakdown = await getRefundBreakdown(params.id)
+      const breakdown = await getRefundBreakdown(id)
       maxRefundable = breakdown.originalTotal
       remainingRefundable = Math.max(0, breakdown.originalTotal - alreadyRefunded)
     } else if (data.adminOverride) {

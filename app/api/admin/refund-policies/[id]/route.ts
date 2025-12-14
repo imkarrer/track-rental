@@ -14,7 +14,7 @@ const updateRefundPolicySchema = z.object({
 // PUT - Update a refund policy
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -22,6 +22,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const data = updateRefundPolicySchema.parse(body)
 
@@ -31,7 +32,7 @@ export async function PUT(
         where: { daysBeforeService: data.daysBeforeService },
       })
 
-      if (existing && existing.id !== params.id) {
+      if (existing && existing.id !== id) {
         return NextResponse.json(
           { error: "A policy with this number of days already exists" },
           { status: 400 }
@@ -40,7 +41,7 @@ export async function PUT(
     }
 
     const policy = await prisma.refundPolicy.update({
-      where: { id: params.id },
+      where: { id },
       data,
     })
 
@@ -63,7 +64,7 @@ export async function PUT(
 // DELETE - Delete a refund policy
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -71,8 +72,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     await prisma.refundPolicy.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

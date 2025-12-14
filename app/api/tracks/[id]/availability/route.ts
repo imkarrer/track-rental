@@ -3,9 +3,10 @@ import { getAvailableWeeks } from "@/lib/availability/check"
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { searchParams } = new URL(req.url)
     const excludeBookingId = searchParams.get("excludeBookingId")
     const excludeUserId = searchParams.get("excludeUserId")
@@ -33,7 +34,7 @@ export async function GET(
     }
 
     const { unavailableDates } = await getAvailableWeeks(
-      params.id,
+      id,
       startDate,
       endDate,
       excludeBookingId || undefined,

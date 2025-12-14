@@ -11,7 +11,7 @@ import { prisma } from "@/lib/db/prisma"
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const bookingId = params.id
+    const { id: bookingId } = await params
 
     // Fetch the booking to verify ownership
     const booking = await prisma.booking.findUnique({

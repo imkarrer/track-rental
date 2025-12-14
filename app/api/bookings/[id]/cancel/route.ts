@@ -20,15 +20,16 @@ function isFutureDate(date: Date) {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  const { id } = await params
   const booking = await prisma.booking.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       userId: true,
@@ -73,7 +74,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -81,11 +82,12 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json().catch(() => ({}))
     const data = cancellationSchema.parse(body)
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { refunds: true },
     })
 
