@@ -109,8 +109,10 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           # Stripe configuration (code uses STRIPE_SECRET_KEY, not STRIPE_API_KEY)
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_API_KEY || 'sk_test_mock' }}
-          STRIPE_WEBHOOK_SECRET: whsec_mock_for_ci
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           # Mock services
           USE_STRIPE_MOCK: 'true'
           USE_GOOGLE_MAPS_MOCK: 'true'
