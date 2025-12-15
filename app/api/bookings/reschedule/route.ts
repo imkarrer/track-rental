@@ -320,7 +320,7 @@ export async function POST(req: Request) {
     console.error("Error calculating reschedule:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       )
     }
@@ -729,7 +729,7 @@ export async function PUT(req: Request) {
     console.error("Error executing reschedule:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       )
     }

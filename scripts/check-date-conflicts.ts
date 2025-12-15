@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client"
 import { toDateStringUTC } from "../lib/date/format"
+import { createPrismaClient } from "./prisma-client"
 
-const prisma = new PrismaClient()
+const prisma = createPrismaClient()
 
 async function main() {
   const args = process.argv.slice(2)

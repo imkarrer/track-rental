@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client"
 import { S3Client, PutObjectCommand, HeadBucketCommand } from "@aws-sdk/client-s3"
 import bcrypt from "bcryptjs"
 import { normalizeEmail } from "../lib/auth/email-normalize"
@@ -6,12 +5,13 @@ import { config } from "dotenv"
 import { resolve } from "path"
 import * as fs from "fs"
 import * as path from "path"
+import { createPrismaClient } from "./prisma-client"
 
 // Load environment variables
 config({ path: resolve(process.cwd(), '.env.local') })
 config({ path: resolve(process.cwd(), '.env') })
 
-const prisma = new PrismaClient()
+const prisma = createPrismaClient()
 
 // S3 Client for MinIO
 const s3Client = new S3Client({

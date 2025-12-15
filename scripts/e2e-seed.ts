@@ -1,14 +1,15 @@
-import { PrismaClient, TrackCategory, CarCategory } from "@prisma/client"
+import { TrackCategory, CarCategory } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { normalizeEmail } from "../lib/auth/email-normalize"
 import { config } from "dotenv"
 import { resolve } from "path"
+import { createPrismaClient } from "./prisma-client"
 
 // Load environment variables from .env.local or .env
 config({ path: resolve(process.cwd(), '.env.local') })
 config({ path: resolve(process.cwd(), '.env') })
 
-const prisma = new PrismaClient()
+const prisma = createPrismaClient()
 
 /**
  * Check if we're running in CI environment
