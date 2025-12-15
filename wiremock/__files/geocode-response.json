@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "address_components": [
+        {
+          "long_name": "123",
+          "short_name": "123",
+          "types": ["street_number"]
+        },
+        {
+          "long_name": "Main Street",
+          "short_name": "Main St",
+          "types": ["route"]
+        },
+        {
+          "long_name": "Springfield",
+          "short_name": "Springfield",
+          "types": ["locality", "political"]
+        },
+        {
+          "long_name": "IL",
+          "short_name": "IL",
+          "types": ["administrative_area_level_1", "political"]
+        },
+        {
+          "long_name": "United States",
+          "short_name": "US",
+          "types": ["country", "political"]
+        }
+      ],
+      "formatted_address": "123 Main St, Springfield, IL, USA",
+      "geometry": {
+        "location": {
+          "lat": 39.7817,
+          "lng": -89.6501
+        },
+        "location_type": "ROOFTOP",
+        "viewport": {
+          "northeast": {
+            "lat": 39.7830499802915,
+            "lng": -89.6487510197085
+          },
+          "southwest": {
+            "lat": 39.7803520197085,
+            "lng": -89.6514509802915
+          }
+        }
+      },
+      "place_id": "ChIJMockPlaceId123",
+      "types": ["street_address"]
+    }
+  ],
+  "status": "OK"
+}
+
+
+
+

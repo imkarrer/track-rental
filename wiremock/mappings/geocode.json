@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/maps/api/geocode/json",
+    "queryParameters": {
+      "address": {
+        "matches": ".*"
+      },
+      "key": {
+        "matches": ".*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "geocode-response.json"
+  }
+}
+
+
+
+
