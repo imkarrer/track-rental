@@ -218,6 +218,78 @@ describe("holidays/us-federal extended coverage", () => {
       const holidays = getHolidaysInRange("2025-03-15", "2025-03-20")
       expect(holidays).toEqual([])
     })
+
+    it("handles single day range", () => {
+      const holidays = getHolidaysInRange("2025-12-25", "2025-12-25")
+      expect(holidays.length).toBe(1)
+      expect(holidays[0].rule.id).toBe("christmas")
+    })
+
+    it("handles range spanning multiple years", () => {
+      const holidays = getHolidaysInRange("2024-12-01", "2026-01-31")
+      // Should include holidays from Dec 2024, all of 2025, and Jan 2026
+      // That's about 1 holiday from 2024 (Christmas), 11 from 2025, and 1 from 2026 (New Year's)
+      expect(holidays.length).toBeGreaterThanOrEqual(13) // At least 13 holidays across the range
+    })
+
+    it("handles boundary dates correctly", () => {
+      // Test start date exactly on a holiday
+      const holidaysStart = getHolidaysInRange("2025-12-25", "2025-12-31")
+      expect(holidaysStart.some(h => h.dateString === "2025-12-25")).toBe(true)
+
+      // Test end date exactly on a holiday
+      const holidaysEnd = getHolidaysInRange("2025-01-01", "2025-01-01")
+      expect(holidaysEnd.some(h => h.dateString === "2025-01-01")).toBe(true)
+    })
+  })
+
+  describe("edge cases for nth weekday calculation", () => {
+    it("handles first weekday correctly", () => {
+      const laborDay = US_FEDERAL_HOLIDAYS.find(h => h.id === "labor-day")!
+      const result = calculateHolidayDate(laborDay, 2025)
+      expect(result.getDay()).toBe(1) // Monday
+      expect(result.getMonth()).toBe(8) // September
+      expect(result.getDate()).toBe(1) // First Monday
+    })
+
+    it("handles second weekday correctly", () => {
+      const columbusDay = US_FEDERAL_HOLIDAYS.find(h => h.id === "columbus-day")!
+      const result = calculateHolidayDate(columbusDay, 2025)
+      expect(result.getDay()).toBe(1) // Monday
+      expect(result.getMonth()).toBe(9) // October
+      // Should be second Monday (between 8-14)
+      expect(result.getDate()).toBeGreaterThanOrEqual(8)
+      expect(result.getDate()).toBeLessThanOrEqual(14)
+    })
+
+    it("handles fourth weekday correctly", () => {
+      const thanksgiving = US_FEDERAL_HOLIDAYS.find(h => h.id === "thanksgiving")!
+      const result = calculateHolidayDate(thanksgiving, 2025)
+      expect(result.getDay()).toBe(4) // Thursday
+      expect(result.getMonth()).toBe(10) // November
+      // Should be fourth Thursday (between 22-28)
+      expect(result.getDate()).toBeGreaterThanOrEqual(22)
+      expect(result.getDate()).toBeLessThanOrEqual(28)
+    })
+  })
+
+  describe("isHoliday edge cases", () => {
+    it("handles observed dates correctly", () => {
+      // New Year's Day 2023 was Sunday, observed Monday Jan 2
+      const result = isHoliday("2023-01-02")
+      expect(result.isHoliday).toBe(true)
+      expect(result.holiday?.id).toBe("new-years-day")
+    })
+
+    it("handles invalid date strings gracefully", () => {
+      // Invalid date strings create invalid Date objects
+      // getFullYear() on invalid date returns NaN, which causes issues
+      // The function may throw, so we test that it handles it appropriately
+      // For truly invalid dates, we expect it to either return false or handle gracefully
+      const result = isHoliday("invalid-date")
+      // If it doesn't throw, it should return false for invalid dates
+      expect(result.isHoliday).toBe(false)
+    })
   })
 })
 
