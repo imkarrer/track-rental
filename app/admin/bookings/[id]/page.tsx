@@ -47,8 +47,9 @@ export default async function BookingDetailPage({
   }
 
   const serviceDate = toUTCDate(booking.eventDate)
+  const now = Date.now()
   const daysUntilService = serviceDate
-    ? Math.floor((serviceDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    ? Math.floor((serviceDate.getTime() - now) / (1000 * 60 * 60 * 24))
     : 0
 
   const bookingForClient = serializeBookingForClient({
