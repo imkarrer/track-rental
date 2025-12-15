@@ -72,9 +72,9 @@ export function BookingDatePicker({
           showOutsideDays
           fixedWeeks
           styles={{
-            caption: { textAlign: "left", fontWeight: 600 },
-            head_cell: { fontSize: "0.8rem", color: "#6b7280" },
-            day: { height: "2.5rem", width: "2.5rem" },
+            month_caption: { textAlign: "left", fontWeight: 600 },
+            weekday: { fontSize: "0.8rem", color: "#6b7280" },
+            day_button: { height: "2.5rem", width: "2.5rem" },
           }}
           modifiersStyles={{
             disabled: {
