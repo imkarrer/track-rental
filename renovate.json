@@ -7,70 +7,111 @@
     "group:allNonMajor"
   ],
   "description": "Renovate configuration for rc-track-rental",
-  "labels": ["dependencies"],
-  "schedule": ["before 6am on monday"],
+  "labels": [
+    "dependencies"
+  ],
+  "schedule": [
+    "before 6am on monday"
+  ],
   "timezone": "America/New_York",
   "prHourlyLimit": 3,
   "prConcurrentLimit": 5,
   "packageRules": [
     {
       "description": "Automerge non-major updates",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
     },
     {
       "description": "Automerge dev dependencies",
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
       "description": "Group Prisma packages",
-      "matchPackagePatterns": ["^@?prisma"],
-      "groupName": "prisma"
+      "groupName": "prisma",
+      "matchPackageNames": [
+        "/^@?prisma/"
+      ]
     },
     {
       "description": "Group React packages",
-      "matchPackagePatterns": ["^react", "^@types/react"],
-      "groupName": "react"
+      "groupName": "react",
+      "matchPackageNames": [
+        "/^react/",
+        "/^@types/react/"
+      ]
     },
     {
       "description": "Group Next.js packages",
-      "matchPackagePatterns": ["^next", "^eslint-config-next"],
-      "groupName": "nextjs"
+      "groupName": "nextjs",
+      "matchPackageNames": [
+        "/^next/",
+        "/^eslint-config-next/"
+      ]
     },
     {
       "description": "Group Stripe packages",
-      "matchPackagePatterns": ["^@?stripe"],
-      "groupName": "stripe"
+      "groupName": "stripe",
+      "matchPackageNames": [
+        "/^@?stripe/"
+      ]
     },
     {
       "description": "Group Radix UI packages",
-      "matchPackagePatterns": ["^@radix-ui"],
-      "groupName": "radix-ui"
+      "groupName": "radix-ui",
+      "matchPackageNames": [
+        "/^@radix-ui/"
+      ]
     },
     {
       "description": "Group testing packages",
-      "matchPackagePatterns": ["vitest", "@vitest", "playwright", "@playwright"],
-      "groupName": "testing"
+      "groupName": "testing",
+      "matchPackageNames": [
+        "/vitest/",
+        "/@vitest/",
+        "/playwright/",
+        "/@playwright/"
+      ]
     },
     {
       "description": "Group TypeScript and types",
-      "matchPackagePatterns": ["^typescript$", "^@types/"],
-      "groupName": "typescript"
+      "groupName": "typescript",
+      "matchPackageNames": [
+        "/^typescript$/",
+        "/^@types//"
+      ]
     },
     {
       "description": "Require approval for major updates",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "major"]
+      "labels": [
+        "dependencies",
+        "major"
+      ]
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"],
+    "labels": [
+      "security"
+    ],
     "automerge": true
   }
 }
