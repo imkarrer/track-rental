@@ -239,9 +239,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ booking }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("Validation error:", error.errors)
+      console.error("Validation error:", error.issues)
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       )
     }

@@ -371,7 +371,7 @@ export async function POST(req: Request) {
     console.error("Error calculating booking modification:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       )
     }
@@ -845,7 +845,7 @@ export async function PUT(req: Request) {
     console.error("Error executing booking modification:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       )
     }
