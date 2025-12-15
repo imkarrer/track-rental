@@ -7,8 +7,6 @@ export default defineConfig({
     },
   },
   datasource: {
-    async url() {
-      return process.env.DATABASE_URL!
-    },
+    url: process.env.DATABASE_URL!,
   },
 })
