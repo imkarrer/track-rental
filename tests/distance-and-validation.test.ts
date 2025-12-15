@@ -40,6 +40,49 @@ describe("distance calculation", () => {
     expect(result.address).toContain("Fallback")
     expect(result.address).toContain("FB")
   })
+
+  it("handles non-OK HTTP responses", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    })
+
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch)
+
+    const result = await calculateDistance("123 Error St", "Errorville", "ER", "00000")
+
+    // Should fallback to default values
+    expect(result.distanceMiles).toBe(15.0)
+    expect(result.durationMinutes).toBe(25)
+    expect(result.address).toContain("Errorville")
+  })
+
+  it("handles empty address components", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"))
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch)
+
+    const result = await calculateDistance("", "", "", "")
+
+    expect(result.address).toBe(", ,  ")
+    expect(result.distanceMiles).toBe(15.0)
+  })
+
+  it("handles malformed JSON response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new Error("Invalid JSON")
+      },
+    })
+
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch)
+
+    const result = await calculateDistance("123 Bad St", "Badville", "BD", "12345")
+
+    // Should fallback
+    expect(result.distanceMiles).toBe(15.0)
+    expect(result.address).toContain("Badville")
+  })
 })
 
 describe("validateTrackFitsInSpace", () => {

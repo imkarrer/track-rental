@@ -104,6 +104,135 @@ describe("convertReservationToBooking", () => {
     await expect(convertReservationToBooking("res-1")).rejects.toThrow("This date is already booked")
     expect(mockPrisma.booking.create).not.toHaveBeenCalled()
   })
+
+  it("skips missing cars when converting", async () => {
+    mockPrisma.reservation.findUnique.mockResolvedValue(baseReservation)
+    // car-1 exists, car-2 doesn't exist
+    mockPrisma.car.findUnique
+      .mockResolvedValueOnce({ id: "car-1", basePricePerDay: 50 })
+      .mockResolvedValueOnce(null) // car-2 not found
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(booking.id).toBe("booking-1")
+    // Should only create booking car for car-1
+    expect(mockPrisma.bookingCar.create).toHaveBeenCalledTimes(1)
+    expect(mockPrisma.bookingCar.create.mock.calls[0][0].data.carId).toBe("car-1")
+  })
+
+  it("handles multi-day reservations correctly", async () => {
+    const multiDayReservation = {
+      ...baseReservation,
+      eventDate: new Date("2025-12-20"),
+      endDate: new Date("2025-12-22"),
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(multiDayReservation)
+    mockPrisma.car.findUnique.mockResolvedValue({ id: "car-1", basePricePerDay: 50 })
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(booking.id).toBe("booking-1")
+    expect(mockPrisma.booking.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eventDate: multiDayReservation.eventDate,
+          endDate: multiDayReservation.endDate,
+        }),
+      })
+    )
+  })
+
+  it("handles overlapping bookings with multi-day reservations", async () => {
+    const multiDayReservation = {
+      ...baseReservation,
+      eventDate: new Date("2025-12-20"),
+      endDate: new Date("2025-12-22"),
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(multiDayReservation)
+    // Booking overlaps: Dec 21-23 overlaps with reservation Dec 20-22
+    mockPrisma.booking.findMany.mockResolvedValue([
+      { id: "existing", eventDate: new Date("2025-12-21"), endDate: new Date("2025-12-23") },
+    ])
+
+    await expect(convertReservationToBooking("res-1")).rejects.toThrow("This date is already booked")
+  })
+
+  it("handles free cars edge case when quantity exceeds free cars", async () => {
+    const reservationWithManyCars = {
+      ...baseReservation,
+      freeCarsIncluded: 1,
+      selectedCars: [
+        { carId: "car-1", quantity: 3 }, // Request 3 cars but only 1 is free
+      ],
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(reservationWithManyCars)
+    mockPrisma.car.findUnique.mockResolvedValue({ id: "car-1", basePricePerDay: 50 })
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(mockPrisma.bookingCar.create).toHaveBeenCalledTimes(1)
+    const call = mockPrisma.bookingCar.create.mock.calls[0][0]
+    // First car should be free (quantity 1), remaining 2 should be paid
+    expect(call.data.isFree).toBe(true)
+    expect(call.data.quantity).toBe(1)
+    expect(call.data.unitPrice).toBe(0)
+  })
+
+  it("handles reservation with no selected cars", async () => {
+    const reservationNoCars = {
+      ...baseReservation,
+      selectedCars: [],
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(reservationNoCars)
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(booking.id).toBe("booking-1")
+    expect(mockPrisma.bookingCar.create).not.toHaveBeenCalled()
+  })
+
+  it("calculates total correctly with referral and reward discounts", async () => {
+    const reservationWithDiscounts = {
+      ...baseReservation,
+      referralDiscount: 20,
+      rewardDiscount: 15,
+      total: 415,
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(reservationWithDiscounts)
+    mockPrisma.car.findUnique.mockResolvedValue({ id: "car-1", basePricePerDay: 50 })
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(mockPrisma.booking.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          total: 380, // 415 - 20 - 15
+          referralDiscount: 20,
+          rewardDiscount: 15,
+        }),
+      })
+    )
+  })
+
+  it("handles reservation with null endDate", async () => {
+    const singleDayReservation = {
+      ...baseReservation,
+      endDate: null,
+    }
+    mockPrisma.reservation.findUnique.mockResolvedValue(singleDayReservation)
+    mockPrisma.car.findUnique.mockResolvedValue({ id: "car-1", basePricePerDay: 50 })
+
+    const booking = await convertReservationToBooking("res-1")
+
+    expect(mockPrisma.booking.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eventDate: singleDayReservation.eventDate,
+          endDate: null,
+        }),
+      })
+    )
+  })
 })
 
 
