@@ -6,4 +6,9 @@ export default defineConfig({
       return process.env.DATABASE_URL!
     },
   },
+  db: {
+    async url() {
+      return process.env.DATABASE_URL!
+    },
+  },
 })
