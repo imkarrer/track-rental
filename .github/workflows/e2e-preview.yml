@@ -184,7 +184,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-pr-${{ needs.check-trigger.outputs.pr_number }}
           path: playwright-report/
@@ -192,7 +192,7 @@ jobs:
 
       - name: Upload test videos on failure
         if: steps.e2e.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-videos-pr-${{ needs.check-trigger.outputs.pr_number }}
           path: test-results/
