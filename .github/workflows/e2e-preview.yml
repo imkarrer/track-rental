@@ -154,7 +154,7 @@ jobs:
           ref: refs/pull/${{ needs.check-trigger.outputs.pr_number }}/head
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
