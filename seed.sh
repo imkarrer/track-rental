@@ -121,7 +121,7 @@ reset_database() {
     
     echo ""
     echo -e "${YELLOW}🔄 Resetting database...${NC}"
-    npx prisma db push --force-reset --skip-generate
+    npx prisma db push --force-reset
     echo -e "${GREEN}   ✅ Database reset complete${NC}"
     echo ""
 }
