@@ -149,7 +149,7 @@ jobs:
             });
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: refs/pull/${{ needs.check-trigger.outputs.pr_number }}/head
 
