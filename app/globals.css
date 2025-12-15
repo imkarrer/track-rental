@@ -1,16 +1,25 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@source "./pages/**/*.{js,ts,jsx,tsx,mdx}";
+@source "./components/**/*.{js,ts,jsx,tsx,mdx}";
+@source "./app/**/*.{js,ts,jsx,tsx,mdx}";
+
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
+    --background: var(--color-background);
+    --foreground: var(--color-foreground);
   }
 }
 
