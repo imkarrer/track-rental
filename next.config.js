@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Acknowledge Turbopack is used (Next.js 16 default)
+  // The webpack config below is kept for backwards compatibility but won't run with Turbopack
+  turbopack: {},
   images: {
     remotePatterns: [
       // MinIO (local development)
