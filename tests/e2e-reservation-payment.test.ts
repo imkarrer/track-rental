@@ -30,6 +30,12 @@ const mockPrisma = vi.hoisted(() => ({
   referralRedemption: {
     findUnique: vi.fn(),
   },
+  referralCode: {
+    findUnique: vi.fn(),
+  },
+  referralReward: {
+    findUnique: vi.fn(),
+  },
 }))
 
 vi.mock("@/lib/db/prisma", () => ({ prisma: mockPrisma }))
@@ -59,18 +65,15 @@ const stripeMock = vi.hoisted(() => ({
 vi.mock("@/lib/stripe/config", () => ({ stripe: stripeMock }))
 
 function makeRequest(body: unknown) {
+  const bodyString = JSON.stringify(body)
   return new NextRequest("http://localhost/api/test", {
     method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
+    body: bodyString,
+    headers: { 
+      "Content-Type": "application/json",
+      "Content-Length": bodyString.length.toString(),
+    },
   })
-}
-
-function makeJsonRequest(body: unknown) {
-  return {
-    json: async () => body,
-    headers: new Headers(),
-  } as unknown as NextRequest
 }
 
 describe("E2E-ish API flows: reservation and payment intent", () => {
@@ -80,11 +83,14 @@ describe("E2E-ish API flows: reservation and payment intent", () => {
     mockPrisma.reservation.count.mockResolvedValue(0)
     mockPrisma.reservation.findFirst.mockResolvedValue(null)
     mockPrisma.reservation.findMany.mockResolvedValue([])
+    mockPrisma.reservation.update.mockResolvedValue({ id: "res-1" })
     mockPrisma.booking.findFirst.mockResolvedValue(null)
     mockPrisma.booking.findMany.mockResolvedValue([])
     mockPrisma.booking.count.mockResolvedValue(0)
     mockPrisma.referralProgramConfig.findMany.mockResolvedValue([])
     mockPrisma.referralRedemption.findUnique.mockResolvedValue(null)
+    mockPrisma.referralCode.findUnique.mockResolvedValue(null)
+    mockPrisma.referralReward.findUnique.mockResolvedValue(null)
     mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1", emailVerified: new Date() })
   })
 
@@ -135,7 +141,9 @@ describe("E2E-ish API flows: reservation and payment intent", () => {
   })
 
   it("creates a payment intent for the reservation owner and returns client secret", async () => {
-    const reservationId = "11111111-1111-1111-1111-111111111111"
+    // Use a proper RFC 4122 UUID (the variant bits in position 17 must be 8, 9, a, or b)
+    const reservationId = "11111111-1111-4111-8111-111111111111"
+    
     mockPrisma.reservation.findUnique.mockResolvedValue({
       id: reservationId,
       userId: "user-1",
@@ -145,9 +153,21 @@ describe("E2E-ish API flows: reservation and payment intent", () => {
       track: { name: "Pro Track" },
       user: { id: "user-1", role: "USER" },
     })
+    mockPrisma.reservation.update.mockResolvedValue({
+      id: reservationId,
+      userId: "user-1",
+      total: 123.45,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      trackId: "track-1",
+    })
     mockPrisma.referralRedemption.findUnique.mockResolvedValue(null)
 
-    const req = makeJsonRequest({ reservationId })
+    // Mock with explicit Promise.resolve
+    const req = {
+      json: () => Promise.resolve({ reservationId }),
+      headers: new Headers(),
+    } as unknown as NextRequest
+    
     const res = await createPaymentIntent(req)
     const json = await res.json()
     expect(res.status).toBe(200)
