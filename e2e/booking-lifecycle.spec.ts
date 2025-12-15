@@ -184,8 +184,10 @@ test.describe('Complete Booking Lifecycle', () => {
       await navigateCalendarMonths(page, datePicker, 6)
       
       // Find an available (non-disabled) date to click
-      // DayPicker renders dates as buttons - we need to find one that's not disabled
-      const availableDayButtons = datePicker.locator('button.rdp-day:not(.rdp-day_disabled):not(.rdp-day_outside)')
+      // DayPicker v9 renders dates as buttons with .rdp-day_button class (v8 used .rdp-day)
+      // Disabled days have .rdp-disabled (v8 used .rdp-day_disabled)
+      // Outside days have .rdp-outside (v8 used .rdp-day_outside)
+      const availableDayButtons = datePicker.locator('button.rdp-day_button:not(.rdp-disabled):not(.rdp-outside)')
       
       // Wait for at least one available date to appear
       await expect(availableDayButtons.first()).toBeVisible({ timeout: 10000 })
@@ -195,7 +197,7 @@ test.describe('Complete Booking Lifecycle', () => {
       const targetDayOfMonth = String(eventDate.getDate())
       
       // Try to find a button with our target day number that's available
-      const targetDayButton = datePicker.locator(`button.rdp-day:not(.rdp-day_disabled):not(.rdp-day_outside)`).filter({ 
+      const targetDayButton = datePicker.locator(`button.rdp-day_button:not(.rdp-disabled):not(.rdp-outside)`).filter({ 
         hasText: new RegExp(`^${targetDayOfMonth}$`) 
       }).first()
       
@@ -510,10 +512,10 @@ test.describe('Complete Booking Lifecycle', () => {
       await expect(page.getByTestId('modify-step1-card')).toBeVisible({ timeout: 15000 })
       
       // Wait for date picker calendar to be ready
-      // The BookingDateRangePicker uses DayPicker which renders with .rdp class
-      // Since modify page doesn't pass a test ID, we use the .rdp class selector
+      // The BookingDateRangePicker uses DayPicker which renders with .rdp-root class in v9 (.rdp in v8)
+      // Since modify page doesn't pass a test ID, we use the .rdp-root class selector
       // The calendar should already be showing the booking's month (via defaultMonth prop)
-      const datePicker = page.locator('.rdp').first()
+      const datePicker = page.locator('.rdp-root, .rdp').first()
       await expect(datePicker).toBeVisible({ timeout: 15000 })
       
       // Wait a bit for the calendar to fully render and initialize
@@ -521,8 +523,8 @@ test.describe('Complete Booking Lifecycle', () => {
       
       // Calendar should already be on the booking's month - no need to navigate
       // Find an available (non-disabled) date to click
-      // DayPicker renders dates as buttons - we need to find one that's not disabled
-      const availableDayButtons = datePicker.locator('button.rdp-day:not(.rdp-day_disabled):not(.rdp-day_outside)')
+      // DayPicker v9 renders dates as buttons with .rdp-day_button class (v8 used .rdp-day)
+      const availableDayButtons = datePicker.locator('button.rdp-day_button:not(.rdp-disabled):not(.rdp-outside)')
       
       // Wait for at least one available date to appear
       await expect(availableDayButtons.first()).toBeVisible({ timeout: 10000 })
@@ -532,7 +534,7 @@ test.describe('Complete Booking Lifecycle', () => {
       const targetDayOfMonth = String(newEventDate.getDate())
       
       // Try to find a button with our target day number that's available
-      const targetDayButton = datePicker.locator(`button.rdp-day:not(.rdp-day_disabled):not(.rdp-day_outside)`).filter({ 
+      const targetDayButton = datePicker.locator(`button.rdp-day_button:not(.rdp-disabled):not(.rdp-outside)`).filter({ 
         hasText: new RegExp(`^${targetDayOfMonth}$`) 
       }).first()
       
