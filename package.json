@@ -54,7 +54,7 @@
     "@vercel/blob": "^0.27.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.344.0",
+    "lucide-react": "^0.561.0",
     "next": "^15.1.0",
     "next-auth": "^4.24.7",
     "nodemailer": "^7.0.11",
