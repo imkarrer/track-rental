@@ -114,8 +114,28 @@ export async function POST(
       remainingRefundable = Math.max(0, maxRefundable - alreadyRefunded)
     }
 
+    // Log refund calculation details for debugging
+    console.log("💰 ADMIN REFUND CALCULATION:", {
+      bookingId: id,
+      bookingTotal: `$${bookingTotal.toFixed(2)}`,
+      alreadyRefunded: `$${alreadyRefunded.toFixed(2)}`,
+      maxRefundable: `$${maxRefundable.toFixed(2)}`,
+      remainingRefundable: `$${remainingRefundable.toFixed(2)}`,
+      requestedAmount: `$${data.amount.toFixed(2)}`,
+      adminOverride: data.adminOverride,
+      selectiveRefund: data.selectiveRefund,
+      ...(data.selectiveRefund && {
+        originalTotal: `$${(await getRefundBreakdown(id)).originalTotal.toFixed(2)}`,
+      }),
+    })
+
     // Validate refund amount
     if (data.amount > remainingRefundable) {
+      console.error("❌ REFUND VALIDATION FAILED:", {
+        requestedAmount: `$${data.amount.toFixed(2)}`,
+        remainingRefundable: `$${remainingRefundable.toFixed(2)}`,
+        gap: `$${(data.amount - remainingRefundable).toFixed(2)}`,
+      })
       return NextResponse.json(
         {
           error: `Refund amount exceeds remaining refundable amount of $${remainingRefundable.toFixed(2)}${data.adminOverride ? " (with admin override)" : ""}${data.selectiveRefund ? " (selective refund)" : ""}`,
@@ -144,7 +164,15 @@ export async function POST(
       })
       stripeRefundId = refund.id
     } catch (stripeError) {
-      console.error("Stripe refund error:", stripeError)
+      console.error("❌ STRIPE REFUND FAILED:", {
+        bookingId: id,
+        paymentIntentId: booking.paymentIntentId,
+        attemptedAmount: `$${data.amount.toFixed(2)}`,
+        amountInCents: amountInCents,
+        bookingTotal: `$${bookingTotal.toFixed(2)}`,
+        alreadyRefunded: `$${alreadyRefunded.toFixed(2)}`,
+        error: stripeError instanceof Error ? stripeError.message : String(stripeError),
+      })
       return NextResponse.json(
         {
           error: "Failed to process refund with Stripe",

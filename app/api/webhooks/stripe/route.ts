@@ -139,13 +139,15 @@ export async function POST(request: NextRequest) {
         // Convert reservation to booking (already includes referralCode and referralDiscount)
         const booking = await convertReservationToBooking(reservationId)
 
-        console.log("Booking created from reservation:", {
+        console.log("💰 BOOKING CREATED FROM RESERVATION:", {
           bookingId: booking.id,
+          paymentIntentId: paymentIntent.id,
+          amountCharged: `$${(paymentIntent.amount / 100).toFixed(2)}`,
+          bookingTotal: `$${Number(booking.total).toFixed(2)}`,
           referralCode: booking.referralCode,
-          referralDiscount: booking.referralDiscount,
-          rewardDiscount: booking.rewardDiscount,
-          subtotal: booking.subtotal,
-          total: booking.total,
+          referralDiscount: `$${Number(booking.referralDiscount || 0).toFixed(2)}`,
+          rewardDiscount: `$${Number(booking.rewardDiscount || 0).toFixed(2)}`,
+          subtotal: `$${Number(booking.subtotal).toFixed(2)}`,
         })
 
         // Update booking with payment intent and confirm
@@ -309,6 +311,16 @@ export async function POST(request: NextRequest) {
         if (booking) {
           const refunded = (charge.amount_refunded || 0) / 100
           const isFullRefund = refunded >= Number(booking.total)
+
+          console.log("📤 CHARGE.REFUNDED WEBHOOK:", {
+            bookingId: booking.id,
+            paymentIntentId,
+            chargeAmount: `$${(charge.amount / 100).toFixed(2)}`,
+            amountRefunded: `$${refunded.toFixed(2)}`,
+            previousTotalRefunded: `$${Number(booking.totalRefunded).toFixed(2)}`,
+            bookingTotal: `$${Number(booking.total).toFixed(2)}`,
+            isFullRefund,
+          })
 
           await prisma.booking.update({
             where: { id: booking.id },
