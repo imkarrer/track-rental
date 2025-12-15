@@ -622,11 +622,14 @@ export async function PUT(req: Request) {
         })
 
         stripeRefundId = refund.id
-        console.log("Booking modification refund processed:", {
+        console.log("📤 MODIFICATION REFUND ISSUED:", {
           bookingId,
           refundId: refund.id,
-          amount: totalRefundAmount,
-          refundPercent,
+          amount: `$${totalRefundAmount.toFixed(2)}`,
+          refundPercent: `${refundPercent}%`,
+          oldTotal: `$${oldTotalWithPromo.toFixed(2)}`,
+          newTotal: `$${newTotalWithPromo.toFixed(2)}`,
+          creditAmount: `$${modifyFinancials.creditAmount.toFixed(2)}`,
         })
       } catch (error) {
         console.error("Failed to process Stripe refund:", error)
@@ -703,6 +706,22 @@ export async function PUT(req: Request) {
         actionType = "MODIFIED_CARS"
       }
 
+      // Create refund record for audit trail if refund was issued
+      if (totalRefundAmount > 0 && stripeRefundId) {
+        await tx.refund.create({
+          data: {
+            bookingId,
+            amount: totalRefundAmount,
+            refundType: "PARTIAL", // Modification refunds are always partial (based on policy)
+            reason: "Booking modification - date/time change",
+            circumstances: `Rescheduled from ${toDateStringUTC(booking.eventDate)} to ${newEventDate}`,
+            stripeRefundId,
+            processedBy: session.user.id,
+            notes: `Automatic refund during booking modification. Refund policy: ${refundPercent}% refundable. Credit amount: $${modifyFinancials.creditAmount.toFixed(2)}, New charge: $${modifyFinancials.newChargeAmount.toFixed(2)}`,
+          },
+        })
+      }
+
       // Create history entry before updating
       await tx.bookingHistory.create({
         data: {
@@ -743,6 +762,10 @@ export async function PUT(req: Request) {
       })
 
       // Update the booking
+      // IMPORTANT: Track refunds from modification to prevent over-refunding later
+      const previouslyRefunded = Number(booking.totalRefunded) || 0
+      const newTotalRefunded = previouslyRefunded + totalRefundAmount
+      
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -759,6 +782,9 @@ export async function PUT(req: Request) {
           // Preserve promo code
           referralCode: booking.referralCode,
           referralDiscount: booking.referralDiscount,
+          // Track total refunded amount (including modification refunds)
+          // This prevents admin from over-refunding when issuing full refund later
+          totalRefunded: newTotalRefunded,
         },
       })
 

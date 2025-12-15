@@ -370,7 +370,14 @@ test.describe('Complete Booking Lifecycle', () => {
       const bookingNumberElement = page.getByTestId('booking-success-number')
       await expect(bookingNumberElement).toBeVisible()
       bookingNumber = await bookingNumberElement.textContent() || ''
+      
+      // Log pricing details for debugging CI failures
+      const totalElement = page.locator('[data-testid="booking-success-total"]').or(
+        page.locator('text=/Total.*\\$/i')
+      ).first()
+      const totalText = await totalElement.textContent().catch(() => 'N/A')
       console.log('✅ Booking confirmed:', bookingNumber)
+      console.log(`💰 BOOKING CREATED - Total charged: ${totalText}`)
     })
 
     await test.step('Navigate to bookings and verify booking created', async () => {
@@ -650,6 +657,25 @@ test.describe('Complete Booking Lifecycle', () => {
       // OR if we see "Final Result" with a positive amount (which indicates payment needed)
       const hasPayment = hasAdditionalPayment || hasToPay || (hasFinalResult && !hasRefund && !hasNoChange)
       
+      // Extract and log pricing details for debugging
+      const oldTotalLocator = reviewCard.locator('text=/Original booking.*\\$/i').or(
+        reviewCard.locator('text=/Step 1.*\\$/i')
+      ).first()
+      const oldTotalText = await oldTotalLocator.textContent().catch(() => 'N/A')
+      
+      const newTotalLocator = reviewCard.locator('text=/New booking.*\\$/i').or(
+        reviewCard.locator('text=/Step 2.*\\$/i')
+      ).first()
+      const newTotalText = await newTotalLocator.textContent().catch(() => 'N/A')
+      
+      const actionLocator = reviewCard.locator('text=/Refund.*\\$|Payment.*\\$|to pay.*\\$/i').first()
+      const actionText = await actionLocator.textContent().catch(() => 'N/A')
+      
+      console.log('💰 MODIFICATION PREVIEW:')
+      console.log(`   Old booking: ${oldTotalText}`)
+      console.log(`   New booking: ${newTotalText}`)
+      console.log(`   Action: ${actionText}`)
+      
       if (!hasRefund && !hasPayment && !hasNoChange) {
         // Try to find pricing breakdown elements as fallback
         const pricingBreakdown = reviewCard.locator('text=/Pricing Breakdown|Step 1:|Step 2:|Step 3:|Step 4:/i')
@@ -849,6 +875,23 @@ test.describe('Complete Booking Lifecycle', () => {
         await page.waitForTimeout(500)
       }
       
+      // Log refund breakdown details for debugging
+      const alreadyRefundedLocator = page.locator('text=/Already Refunded.*\\$/i').first()
+      const alreadyRefundedText = await alreadyRefundedLocator.textContent().catch(() => 'N/A')
+      
+      const remainingRefundableLocator = page.locator('text=/Remaining Refundable.*\\$/i').or(
+        page.locator('text=/Full Refund Available.*\\$/i')
+      ).first()
+      const remainingRefundableText = await remainingRefundableLocator.textContent().catch(() => 'N/A')
+      
+      const originalTotalLocator = page.locator('text=/Original Amount.*\\$/i').first()
+      const originalTotalText = await originalTotalLocator.textContent().catch(() => 'N/A')
+      
+      console.log('💰 REFUND BREAKDOWN:')
+      console.log(`   Original amount: ${originalTotalText}`)
+      console.log(`   Already refunded: ${alreadyRefundedText}`)
+      console.log(`   Remaining refundable: ${remainingRefundableText}`)
+      
       // Click "Full Refund" button to set refund type
       // Check for selective refund button first, then override, then regular
       const fullRefundButton = page.locator('button:has-text("💯 Full Refund (Selective")').or(
@@ -857,7 +900,19 @@ test.describe('Complete Booking Lifecycle', () => {
         page.locator('button:has-text("Full Refund")')
       ).first()
       await expect(fullRefundButton).toBeVisible({ timeout: 10000 })
+      
+      // Get the button text to log which refund type was used
+      const refundButtonText = await fullRefundButton.textContent()
+      console.log(`🔘 Clicking refund button: ${refundButtonText}`)
+      
       await fullRefundButton.click({ timeout: 10000 })
+      
+      // Log the refund amount being processed
+      const refundAmountInput = page.locator('input[id="amount"]').or(
+        page.locator('input[name="amount"]')
+      ).first()
+      const refundAmount = await refundAmountInput.inputValue().catch(() => 'N/A')
+      console.log(`💰 REFUND AMOUNT BEING PROCESSED: $${refundAmount}`)
       
       // Fill in required fields
       // Cancellation circumstances
