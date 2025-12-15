@@ -386,4 +386,165 @@ describe("getAvailableWeeks - comprehensive edge cases", () => {
     expect(result.availableDays["2025-12-28"]).toBe(false)
     expect(result.availableDays["2025-12-29"]).toBe(true)
   })
+
+  it("should handle excludeReservationId correctly", async () => {
+    // Reservation by user-1 on Dec 28
+    // When excludeReservationId is res-1, Dec 28 should be available
+    mockPrisma.booking.findMany.mockResolvedValue([])
+    mockPrisma.holiday.findMany.mockResolvedValue([])
+    mockPrisma.reservation.findMany.mockImplementation(async (args: any) => {
+      // If excludeReservationId is provided (id.not is set), return empty array
+      if (args?.where?.id?.not) {
+        return []
+      }
+      return [
+        {
+          eventDate: new Date("2025-12-28T00:00:00.000Z"),
+          endDate: null,
+        },
+      ]
+    })
+
+    const result = await getAvailableWeeks(
+      trackId,
+      "2025-12-27",
+      "2025-12-29",
+      undefined,
+      undefined,
+      "res-1"
+    )
+
+    expect(result.availableDays["2025-12-28"]).toBe(true)
+    expect(result.unavailableDates).not.toContain("2025-12-28")
+
+    // Verify the query excluded the reservation ID
+    const where = mockPrisma.reservation.findMany.mock.calls[0][0]?.where
+    expect(where?.id?.not).toBe("res-1")
+  })
+
+  it("should handle excludeReservationId with bookings", async () => {
+    // Booking on Dec 27
+    // Reservation on Dec 28
+    // When excludeReservationId is res-1, Dec 27 unavailable, Dec 28 available
+    mockPrisma.booking.findMany.mockResolvedValue([
+      {
+        id: "booking-1",
+        eventDate: new Date("2025-12-27T00:00:00.000Z"),
+        endDate: null,
+      },
+    ])
+    mockPrisma.holiday.findMany.mockResolvedValue([])
+    mockPrisma.reservation.findMany.mockImplementation(async (args: any) => {
+      if (args?.where?.id?.not) {
+        return []
+      }
+      return [
+        {
+          eventDate: new Date("2025-12-28T00:00:00.000Z"),
+          endDate: null,
+        },
+      ]
+    })
+
+    const result = await getAvailableWeeks(
+      trackId,
+      "2025-12-27",
+      "2025-12-29",
+      undefined,
+      undefined,
+      "res-1"
+    )
+
+    expect(result.availableDays["2025-12-27"]).toBe(false)
+    expect(result.availableDays["2025-12-28"]).toBe(true)
+    expect(result.availableDays["2025-12-29"]).toBe(true)
+  })
+
+  it("should handle excludeUserId and excludeReservationId together", async () => {
+    // Reservation by user-1 on Dec 27
+    // Reservation by user-2 on Dec 28
+    // When excludeUserId is user-1 and excludeReservationId is res-2, both should be available
+    mockPrisma.booking.findMany.mockResolvedValue([])
+    mockPrisma.holiday.findMany.mockResolvedValue([])
+    mockPrisma.reservation.findMany.mockImplementation(async (args: any) => {
+      // If both exclusions are applied, return empty array
+      if (args?.where?.userId?.not && args?.where?.id?.not) {
+        return []
+      }
+      // If only userId exclusion, return user-2's reservation
+      if (args?.where?.userId?.not === "user-1") {
+        return [
+          {
+            eventDate: new Date("2025-12-28T00:00:00.000Z"),
+            endDate: null,
+          },
+        ]
+      }
+      // Default: return both reservations
+      return [
+        {
+          eventDate: new Date("2025-12-27T00:00:00.000Z"),
+          endDate: null,
+        },
+        {
+          eventDate: new Date("2025-12-28T00:00:00.000Z"),
+          endDate: null,
+        },
+      ]
+    })
+
+    const result = await getAvailableWeeks(
+      trackId,
+      "2025-12-27",
+      "2025-12-29",
+      undefined,
+      "user-1",
+      "res-2"
+    )
+
+    expect(result.availableDays["2025-12-27"]).toBe(true)
+    expect(result.availableDays["2025-12-28"]).toBe(true)
+    expect(result.availableDays["2025-12-29"]).toBe(true)
+  })
+
+  it("should handle multi-day reservations that span the entire requested range", async () => {
+    // Reservation from Dec 26-30, requested range is Dec 27-29
+    // All days should be unavailable
+    mockPrisma.booking.findMany.mockResolvedValue([])
+    mockPrisma.holiday.findMany.mockResolvedValue([])
+    mockPrisma.reservation.findMany.mockResolvedValue([
+      {
+        eventDate: new Date("2025-12-26T00:00:00.000Z"),
+        endDate: new Date("2025-12-30T00:00:00.000Z"),
+      },
+    ])
+
+    const result = await getAvailableWeeks(trackId, "2025-12-27", "2025-12-29", undefined)
+
+    expect(result.availableDays["2025-12-27"]).toBe(false)
+    expect(result.availableDays["2025-12-28"]).toBe(false)
+    expect(result.availableDays["2025-12-29"]).toBe(false)
+    expect(result.unavailableDates).toContain("2025-12-27")
+    expect(result.unavailableDates).toContain("2025-12-28")
+    expect(result.unavailableDates).toContain("2025-12-29")
+  })
+
+  it("should handle bookings that exactly match the range boundaries", async () => {
+    // Booking exactly matches requested range Dec 27-29
+    mockPrisma.booking.findMany.mockResolvedValue([
+      {
+        id: "booking-1",
+        eventDate: new Date("2025-12-27T00:00:00.000Z"),
+        endDate: new Date("2025-12-29T00:00:00.000Z"),
+      },
+    ])
+    mockPrisma.holiday.findMany.mockResolvedValue([])
+    mockPrisma.reservation.findMany.mockResolvedValue([])
+
+    const result = await getAvailableWeeks(trackId, "2025-12-27", "2025-12-29", undefined)
+
+    expect(result.availableDays["2025-12-27"]).toBe(false)
+    expect(result.availableDays["2025-12-28"]).toBe(false)
+    expect(result.availableDays["2025-12-29"]).toBe(false)
+  })
 })

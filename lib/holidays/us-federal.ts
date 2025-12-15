@@ -264,6 +264,12 @@ export function isHoliday(dateString: string): {
   observedDate?: string
 } {
   const date = new Date(dateString + 'T00:00:00')
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    return { isHoliday: false }
+  }
+  
   const year = date.getFullYear()
   const holidays = getFederalHolidaysForYear(year)
   

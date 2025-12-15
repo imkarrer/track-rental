@@ -78,6 +78,25 @@ describe("lib/date/format - extended edge cases", () => {
     it("handles date string with year and month only", () => {
       expect(toDateStringUTC("2025-12")).toBeNull()
     })
+
+    it("handles Date object with invalid date", () => {
+      const invalidDate = new Date("invalid")
+      // Invalid dates throw RangeError when calling toISOString()
+      // The function should handle this gracefully or we expect it to throw
+      expect(() => toDateStringUTC(invalidDate)).toThrow(RangeError)
+    })
+
+    it("handles date string with incomplete parts", () => {
+      expect(toDateStringUTC("2025-")).toBeNull()
+      expect(toDateStringUTC("-12-25")).toBeNull()
+      expect(toDateStringUTC("2025-12-")).toBeNull()
+    })
+
+    it("handles date string with non-numeric parts", () => {
+      expect(toDateStringUTC("abcd-12-25")).toBeNull()
+      expect(toDateStringUTC("2025-ab-25")).toBeNull()
+      expect(toDateStringUTC("2025-12-cd")).toBeNull()
+    })
   })
 
   describe("toUTCDate", () => {
