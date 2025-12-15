@@ -91,7 +91,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rc_track_rental
         run: |
           npx prisma generate
-          npx prisma db push --accept-data-loss --skip-generate
+          npx prisma db push --accept-data-loss
 
       - name: Seed test data
         env:

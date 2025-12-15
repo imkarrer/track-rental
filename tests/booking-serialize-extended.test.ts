@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+const Decimal = Prisma.Decimal
 import { serializeBookingForClient } from "@/lib/bookings/serialize"
 
 describe("serializeBookingForClient - extended edge cases", () => {

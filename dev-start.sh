@@ -789,7 +789,7 @@ if [ "$E2E_MODE" = "ci" ]; then
     
     # Step 1: Ensure database schema is up to date
     echo -e "${GREEN}📊 Step 1: Resetting database...${NC}"
-    if npx prisma db push --force-reset --skip-generate --accept-data-loss > /dev/null 2>&1; then
+    if npx prisma db push --force-reset --accept-data-loss > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Database reset complete${NC}"
     else
         echo -e "${RED}❌ Failed to reset database${NC}"

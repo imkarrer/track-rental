@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { normalizeEmail } from "../lib/auth/email-normalize"
+import { createPrismaClient } from "./prisma-client"
 
-const prisma = new PrismaClient()
+const prisma = createPrismaClient()
 
 async function main() {
   const args = process.argv.slice(2)

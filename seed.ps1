@@ -110,7 +110,7 @@ function Reset-Database {
     
     Write-Host ""
     Write-Warning "🔄 Resetting database..."
-    npx prisma db push --force-reset --skip-generate
+    npx prisma db push --force-reset
     Write-Success "   ✅ Database reset complete"
     Write-Host ""
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma"
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+type Decimal = Prisma.Decimal
 
 /**
  * Calculate non-refundable amount based on cancellation date and service date

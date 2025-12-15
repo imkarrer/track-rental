@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client"
+import { createPrismaClient } from "./prisma-client"
 
-const prisma = new PrismaClient()
+const prisma = createPrismaClient()
 
 async function main() {
   const args = process.argv.slice(2)

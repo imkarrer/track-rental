@@ -1,4 +1,5 @@
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+type Decimal = Prisma.Decimal
 
 export interface PricingInput {
   trackBasePrice: number

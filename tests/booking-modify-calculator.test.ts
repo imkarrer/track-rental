@@ -5,7 +5,8 @@ import {
   formatModifyCalculationForCustomer,
   serializeModifyCalculation 
 } from "@/lib/booking/modify-calculator"
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+const Decimal = Prisma.Decimal
 
 describe("Booking Modify Calculator", () => {
   // Mock refund policies

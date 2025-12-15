@@ -8,7 +8,8 @@
 import { describe, it, expect } from "vitest"
 import { calculateModifyFinancials } from "@/lib/booking/modify-calculator"
 import { calculateRefundPercent } from "@/lib/booking/refund-calculator"
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+const Decimal = Prisma.Decimal
 
 describe("Modify Calculator Integration", () => {
   // Simulate refund policies from database
