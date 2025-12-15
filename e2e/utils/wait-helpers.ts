@@ -231,7 +231,7 @@ export async function retryWithBackoff<T>(
 /**
  * Navigate the calendar forward by clicking the "next month" button
  * @param page Playwright page object
- * @param datePicker Locator for the calendar container (can be .rdp element or parent container)
+ * @param datePicker Locator for the calendar container (can be .rdp-root element or parent container)
  * @param months Number of months to navigate forward (default: 6)
  */
 export async function navigateCalendarMonths(
@@ -240,9 +240,10 @@ export async function navigateCalendarMonths(
   months: number = 6
 ): Promise<void> {
   // Find the next button - try multiple selectors for robustness
-  // The button has class rdp-nav_button_next and name="next-month"
+  // react-day-picker v9 uses rdp-button_next (v8 used rdp-nav_button_next)
   const buttonSelectors = [
-    'button.rdp-nav_button_next',
+    'button.rdp-button_next',           // v9 class name
+    'button.rdp-nav_button_next',       // v8 fallback
     'button[name="next-month"]',
     'button[aria-label="Go to next month"]',
   ]
@@ -250,7 +251,7 @@ export async function navigateCalendarMonths(
   let nextButton
   let found = false
   
-  // First try to find it directly in datePicker (if datePicker is .rdp)
+  // First try to find it directly in datePicker (if datePicker is .rdp-root)
   for (const selector of buttonSelectors) {
     const candidate = datePicker.locator(selector).first()
     const count = await candidate.count().catch(() => 0)
@@ -261,9 +262,10 @@ export async function navigateCalendarMonths(
     }
   }
   
-  // If not found, datePicker is likely a parent container, find .rdp inside it
+  // If not found, datePicker is likely a parent container, find .rdp-root inside it
+  // react-day-picker v9 uses .rdp-root (v8 used .rdp)
   if (!found) {
-    const rdpElement = datePicker.locator('.rdp').first()
+    const rdpElement = datePicker.locator('.rdp-root, .rdp').first()
     await expect(rdpElement).toBeVisible({ timeout: 10000 })
     
     for (const selector of buttonSelectors) {

@@ -1,37 +1,26 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, Suspense, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 function ActivatePageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
   
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [message, setMessage] = useState("")
 
-  useEffect(() => {
-    if (!token) {
-      setStatus("error")
-      setMessage("No activation token provided")
-      return
-    }
-
-    activateAccount(token)
-  }, [token])
-
-  const activateAccount = async (token: string) => {
+  const activateAccount = useCallback(async (tokenValue: string) => {
     try {
       const response = await fetch("/api/auth/activate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: tokenValue }),
       })
 
       const data = await response.json()
@@ -43,11 +32,21 @@ function ActivatePageContent() {
         setStatus("error")
         setMessage(data.error || "Activation failed")
       }
-    } catch (error) {
+    } catch {
       setStatus("error")
       setMessage("An error occurred during activation")
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!token) {
+      setStatus("error")
+      setMessage("No activation token provided")
+      return
+    }
+
+    activateAccount(token)
+  }, [token, activateAccount])
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

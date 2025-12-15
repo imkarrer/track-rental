@@ -57,21 +57,29 @@ export function CompactDayPricing({
   const selectedDayOfWeek = selectedDateObj ? selectedDateObj.getDay() : null
 
   useEffect(() => {
-    if (selectedDate) {
-      fetch(`/api/holidays/check?date=${selectedDate}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setIsSelectedHoliday(data.isHoliday || false)
-          setSelectedHolidayName(data.holidayName || null)
-        })
-        .catch(() => {
-          setIsSelectedHoliday(false)
-          setSelectedHolidayName(null)
-        })
-    } else {
+    if (!selectedDate) {
       setIsSelectedHoliday(false)
       setSelectedHolidayName(null)
+      return
     }
+    
+    let cancelled = false
+    fetch(`/api/holidays/check?date=${selectedDate}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) {
+          setIsSelectedHoliday(data.isHoliday || false)
+          setSelectedHolidayName(data.holidayName || null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsSelectedHoliday(false)
+          setSelectedHolidayName(null)
+        }
+      })
+    
+    return () => { cancelled = true }
   }, [selectedDate])
 
   if (loading) {

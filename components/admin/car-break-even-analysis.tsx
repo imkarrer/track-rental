@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { calculateCarBreakEven, CarBreakEvenResult, CarBreakEvenConfig } from "@/lib/pricing/car-break-even"
 
@@ -15,12 +15,7 @@ export function CarBreakEvenAnalysis({
 }: CarBreakEvenAnalysisProps) {
   const [fixedCostsConfig, setFixedCostsConfig] = useState<Partial<CarBreakEvenConfig> | null>(null)
 
-  useEffect(() => {
-    // Fetch fixed costs configuration
-    fetchFixedCostsConfig()
-  }, [])
-
-  const fetchFixedCostsConfig = async () => {
+  const fetchFixedCostsConfig = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/fixed-costs")
       if (response.ok) {
@@ -49,7 +44,12 @@ export function CarBreakEvenAnalysis({
     } catch (error) {
       console.error("Error fetching fixed costs config:", error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    // Fetch fixed costs configuration
+    fetchFixedCostsConfig()
+  }, [fetchFixedCostsConfig])
 
   const unitCostNum = parseFloat(unitCost) || 0
   const basePriceNum = parseFloat(basePricePerDay) || 0
