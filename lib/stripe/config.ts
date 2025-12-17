@@ -85,7 +85,7 @@ const createMockHttpClient = () => {
 }
 
 const stripeConfig: Stripe.StripeConfig = {
-  apiVersion: "2025-11-17.clover",
+  apiVersion: "2025-12-15.clover",
 }
 
 // Only add custom HTTP client if using mock
